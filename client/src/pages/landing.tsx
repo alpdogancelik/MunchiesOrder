@@ -1,160 +1,162 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ChefHat, UtensilsCrossed, Truck, Star, Users, Store } from "lucide-react";
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowRight, Utensils, Clock, Shield, Star } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 
 export default function Landing() {
-  const [userType, setUserType] = useState<'student' | 'restaurant' | 'courier' | null>(null);
-  const [, setLocation] = useLocation();
+  const [userType, setUserType] = useState<'student' | 'restaurant' | 'courier'>('student');
 
-  const handleLogin = (type: 'student' | 'restaurant' | 'courier') => {
-    // Store user type in localStorage for post-login routing
-    localStorage.setItem('userType', type);
-    setLocation('/auth');
+  const features = [
+    {
+      icon: <Utensils className="w-6 h-6" />,
+      title: "Wide Selection",
+      description: "Choose from diverse restaurants and cuisines across campus"
+    },
+    {
+      icon: <Clock className="w-6 h-6" />,
+      title: "Fast Delivery",
+      description: "Quick delivery with real-time tracking to your location"
+    },
+    {
+      icon: <Shield className="w-6 h-6" />,
+      title: "Secure Payment",
+      description: "Safe and reliable payment processing with multiple options"
+    },
+    {
+      icon: <Star className="w-6 h-6" />,
+      title: "Quality Assured",
+      description: "Reviewed restaurants with ratings from fellow students"
+    }
+  ];
+
+  const handleGetStarted = () => {
+    localStorage.setItem('userType', userType);
+    window.location.href = '/auth';
   };
 
-  if (userType === null) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 relative overflow-hidden">
-        {/* Animated food particles background */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="animate-bounce absolute top-20 left-10 text-6xl opacity-20">🍕</div>
-          <div className="animate-bounce absolute top-40 right-20 text-4xl opacity-20" style={{ animationDelay: '1s' }}>🍔</div>
-          <div className="animate-bounce absolute bottom-40 left-20 text-5xl opacity-20" style={{ animationDelay: '2s' }}>🍜</div>
-          <div className="animate-bounce absolute bottom-20 right-10 text-4xl opacity-20" style={{ animationDelay: '0.5s' }}>🌮</div>
-          <div className="animate-bounce absolute top-60 left-1/2 text-3xl opacity-20" style={{ animationDelay: '1.5s' }}>🍰</div>
-        </div>
-        
-        <div className="flex flex-col items-center justify-center min-h-screen px-6 py-8 relative z-10">
-          {/* Logo */}
-          <div className="text-center mb-16">
-            <div className="relative mb-8">
-              <div className="flex justify-center mb-6">
-                <Logo size="xl" className="drop-shadow-2xl" />
-              </div>
-            </div>
-            <h1 className="text-6xl font-black text-white mb-4 drop-shadow-2xl tracking-wider" 
-                style={{ fontFamily: '"Fredoka One", "Comic Sans MS", cursive' }}>
-              Munchies
-            </h1>
-            <p className="text-white/90 text-xl font-bold drop-shadow-lg mb-2" 
-               style={{ fontFamily: '"Nunito", sans-serif' }}>
-              🎓 University Food Delivery
-            </p>
-            <p className="text-white/70 text-lg font-medium drop-shadow-md">
-              Kalkanlı Campus • Delicious & Fast
-            </p>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      {/* Header */}
+      <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <div className="max-w-md mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Logo size="md" />
+            <Link href="/auth">
+              <Button variant="ghost" size="sm" className="text-gray-600 dark:text-gray-300">
+                Sign In
+              </Button>
+            </Link>
           </div>
+        </div>
+      </header>
 
+      <div className="max-w-md mx-auto px-6">
+        {/* Hero Section */}
+        <div className="pt-12 pb-8 text-center">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
+            Campus Food
+            <span className="block text-orange-500">Delivered Fast</span>
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-sm mx-auto">
+            Order from your favorite campus restaurants and track delivery in real-time
+          </p>
+          
           {/* User Type Selection */}
-          <div className="w-full max-w-md space-y-4">
-            <h2 className="text-white text-2xl font-bold text-center mb-8 drop-shadow-lg">
-              Choose Your Experience
-            </h2>
-            
-            {/* Student Panel */}
-            <Card className="transform hover:scale-105 transition-all duration-300 shadow-2xl border-0 bg-white/95 backdrop-blur-lg">
-              <CardContent className="pt-6 pb-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <Users className="text-white text-2xl" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-3" style={{ fontFamily: '"Nunito", sans-serif' }}>
-                    I'm a Student
-                  </h3>
-                  <p className="text-gray-600 mb-6 leading-relaxed">
-                    Order delicious meals from campus restaurants. Quick delivery to your dorm or study spot!
-                  </p>
-                  <Button 
-                    onClick={() => handleLogin('student')}
-                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg transform hover:scale-105"
-                  >
-                    🎓 Enter as Student
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Restaurant Owner Panel */}
-            <Card className="transform hover:scale-105 transition-all duration-300 shadow-2xl border-0 bg-white/95 backdrop-blur-lg">
-              <CardContent className="pt-6 pb-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <Store className="text-white text-2xl" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-3" style={{ fontFamily: '"Nunito", sans-serif' }}>
-                    I'm a Restaurant Owner
-                  </h3>
-                  <p className="text-gray-600 mb-6 leading-relaxed">
-                    Manage your restaurant, menu, and orders. Grow your business with hungry students!
-                  </p>
-                  <Button 
-                    onClick={() => handleLogin('restaurant')}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg transform hover:scale-105"
-                  >
-                    🍳 Enter as Owner
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Courier Panel */}
-            <Card className="transform hover:scale-105 transition-all duration-300 shadow-2xl border-0 bg-white/95 backdrop-blur-lg">
-              <CardContent className="pt-6 pb-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <Truck className="text-white text-2xl" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-3" style={{ fontFamily: '"Nunito", sans-serif' }}>
-                    I'm a Courier
-                  </h3>
-                  <p className="text-gray-600 mb-6 leading-relaxed">
-                    Deliver orders, earn money, and track your daily deliveries on campus!
-                  </p>
-                  <Button 
-                    onClick={() => handleLogin('courier')}
-                    className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-purple-600 hover:to-pink-700 transition-all duration-300 shadow-lg transform hover:scale-105"
-                  >
-                    🚴 Start Delivering
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Features */}
-          <div className="grid grid-cols-3 gap-6 w-full max-w-md text-white/90 mt-12">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-white/30 rounded-full flex items-center justify-center mx-auto mb-2 backdrop-blur-sm shadow-lg">
-                <Truck className="text-white" size={20} />
-              </div>
-              <p className="text-sm font-medium">Fast Delivery</p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-white/30 rounded-full flex items-center justify-center mx-auto mb-2 backdrop-blur-sm shadow-lg">
-                <Star className="text-white" size={20} />
-              </div>
-              <p className="text-sm font-medium">Top Rated</p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-white/30 rounded-full flex items-center justify-center mx-auto mb-2 backdrop-blur-sm shadow-lg">
-                <ChefHat className="text-white" size={20} />
-              </div>
-              <p className="text-sm font-medium">Fresh Food</p>
+          <div className="mb-8">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">I am a:</p>
+            <div className="grid grid-cols-3 gap-2">
+              <Button
+                variant={userType === 'student' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setUserType('student')}
+                className="h-12 text-xs"
+              >
+                Student
+              </Button>
+              <Button
+                variant={userType === 'restaurant' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setUserType('restaurant')}
+                className="h-12 text-xs"
+              >
+                Restaurant
+              </Button>
+              <Button
+                variant={userType === 'courier' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setUserType('courier')}
+                className="h-12 text-xs"
+              >
+                Courier
+              </Button>
             </div>
           </div>
 
-          {/* Cozy Software Branding */}
-          <div className="absolute bottom-4 right-4 text-white/60 text-xs font-medium">
-            Powered by Cozy Software
+          <Button 
+            onClick={handleGetStarted}
+            size="lg" 
+            className="w-full h-12 text-base font-medium"
+          >
+            Get Started
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
+        </div>
+
+        {/* Features */}
+        <div className="py-8">
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white text-center mb-8">
+            Why Choose Munchies?
+          </h2>
+          <div className="space-y-4">
+            {features.map((feature, index) => (
+              <Card key={index} className="border-0 shadow-sm bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm">
+                <CardContent className="p-5">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center text-orange-600 dark:text-orange-400 flex-shrink-0">
+                      {feature.icon}
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-900 dark:text-white mb-1">
+                        {feature.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {feature.description}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
-      </div>
-    );
-  }
 
-  // This won't be reached in normal flow since we redirect to login
-  return null;
+        {/* Stats */}
+        <div className="py-8">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">15+</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Restaurants</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">500+</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Students</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">15min</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Avg Delivery</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <footer className="py-8 text-center border-t border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Made for Kalkanlı Campus Students
+          </p>
+        </footer>
+      </div>
+    </div>
+  );
 }

@@ -109,6 +109,9 @@ export interface IStorage {
   // Enhanced order operations for courier tracking
   getCourierOrders(courierId: string): Promise<(Order & { restaurant: Restaurant; orderItems: (OrderItem & { menuItem: MenuItem })[] })[]>;
   assignOrderToCourier(orderId: number, courierId?: string): Promise<Order>;
+  
+  // Get courier users
+  getCourierUsers(): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -792,6 +795,22 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orders.id, orderId))
       .returning();
     return updatedOrder;
+  }
+
+  // Get all users who are couriers (based on localStorage userType or email pattern)
+  async getCourierUsers(): Promise<User[]> {
+    // For now, we'll identify couriers by their userType in localStorage
+    // In a real app, you'd have a user role field in the database
+    const allUsers = await db.select().from(users);
+    
+    // Filter users who have courier in their username or are known couriers
+    // This is a temporary solution - in production you'd have proper role management
+    return allUsers.filter(user => 
+      user.username.includes('courier') || 
+      user.email?.includes('courier') ||
+      user.firstName?.toLowerCase().includes('courier') ||
+      user.lastName?.toLowerCase().includes('courier')
+    );
   }
 }
 

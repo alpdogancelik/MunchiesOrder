@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export default function MenuManagement() {
   const { restaurantId } = useParams();
@@ -523,13 +524,11 @@ function MenuItemForm({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Image URL
+                    Meal Photo
                   </label>
-                  <Input
-                    type="url"
+                  <ImageUpload
                     value={formData.imageUrl}
-                    onChange={(e) => handleChange('imageUrl', e.target.value)}
-                    placeholder="https://example.com/image.jpg"
+                    onChange={(url) => handleChange('imageUrl', url)}
                   />
                 </div>
               </div>

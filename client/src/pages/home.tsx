@@ -27,10 +27,16 @@ export default function Home() {
 
   const defaultAddress = addresses.find((addr: any) => addr.isDefault) || addresses[0];
 
+  // Enhanced search and filtering functionality
   const filteredRestaurants = restaurants.filter((restaurant: any) => {
-    const matchesFilter = selectedFilter === "All" || restaurant.cuisine.toLowerCase().includes(selectedFilter.toLowerCase());
-    const matchesSearch = restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         restaurant.cuisine.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = selectedFilter === "All" || 
+      restaurant.cuisine.toLowerCase() === selectedFilter.toLowerCase();
+    
+    const matchesSearch = searchQuery === "" || 
+      restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      restaurant.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      restaurant.cuisine.toLowerCase().includes(searchQuery.toLowerCase());
+    
     return matchesFilter && matchesSearch;
   });
 

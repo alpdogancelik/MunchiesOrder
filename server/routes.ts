@@ -626,6 +626,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get available couriers (users with courier role)
+  app.get('/api/couriers/available', isAuthenticated, async (req: any, res) => {
+    try {
+      const couriers = await storage.getCourierUsers();
+      res.json(couriers);
+    } catch (error) {
+      console.error("Error fetching available couriers:", error);
+      res.status(500).json({ message: "Failed to fetch couriers" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

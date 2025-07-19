@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import AuthPage from "@/pages/auth-page";
 import Home from "@/pages/home";
+import StudentHome from "@/pages/student-home";
 import Restaurant from "@/pages/restaurant";
 import Cart from "@/pages/cart";
 import Payment from "@/pages/payment";
@@ -55,7 +56,7 @@ function Router() {
             </>
           ) : (
             <>
-              <Route path="/" component={Home} />
+              <Route path="/" component={StudentHome} />
               <Route path="/restaurant/:id" component={Restaurant} />
               <Route path="/cart" component={Cart} />
               <Route path="/payment" component={Payment} />

@@ -25,12 +25,10 @@ export default function CourierManagement() {
     enabled: !!selectedRestaurant,
   });
 
-  // Mock available couriers (in real app, this would be from API)
-  const availableCouriers = [
-    { id: "courier_1", username: "mehmet_courier", firstName: "Mehmet", lastName: "Yılmaz", phone: "+90 555 123 4567" },
-    { id: "courier_2", username: "ayse_delivery", firstName: "Ayşe", lastName: "Kaya", phone: "+90 555 987 6543" },
-    { id: "courier_3", username: "fatih_bike", firstName: "Fatih", lastName: "Özkan", phone: "+90 555 456 7890" },
-  ];
+  // Get real available couriers from API
+  const { data: allCouriers = [] } = useQuery({
+    queryKey: ["/api/couriers/available"],
+  });
 
   const assignCourierMutation = useMutation({
     mutationFn: async ({ restaurantId, courierId }: { restaurantId: number; courierId: string }) => {
@@ -83,7 +81,7 @@ export default function CourierManagement() {
   };
 
   const assignedCourierIds = assignedCouriers.map((ac: any) => ac.courierId);
-  const unassignedCouriers = availableCouriers.filter(c => !assignedCourierIds.includes(c.id));
+  const unassignedCouriers = allCouriers.filter((c: any) => !assignedCourierIds.includes(c.id));
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-dark-200">
@@ -187,7 +185,7 @@ export default function CourierManagement() {
                     All available couriers are already assigned
                   </p>
                 ) : (
-                  unassignedCouriers.map((courier) => (
+                  unassignedCouriers.map((courier: any) => (
                     <div key={courier.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-100 rounded-lg">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
@@ -198,7 +196,7 @@ export default function CourierManagement() {
                             {courier.firstName} {courier.lastName}
                           </p>
                           <p className="text-sm text-gray-600 dark:text-gray-400">@{courier.username}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-500">{courier.phone}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-500">{courier.email}</p>
                         </div>
                       </div>
                       <Button
