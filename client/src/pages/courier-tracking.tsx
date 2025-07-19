@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, Phone, Navigation, CheckCircle, Truck } from "lucide-react";
+import { MapPin, Clock, Phone, Navigation, CheckCircle, Truck, Store } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { LogoutButton } from "@/components/ui/logout-button";
 

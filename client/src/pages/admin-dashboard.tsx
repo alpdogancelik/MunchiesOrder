@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { ORDER_STATUS, ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from "@/lib/constants";
+import { Truck, Store } from "lucide-react";
 
 export default function AdminDashboard() {
   const { isAuthenticated, isLoading } = useAuth();
