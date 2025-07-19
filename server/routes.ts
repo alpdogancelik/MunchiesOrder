@@ -744,7 +744,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const restaurantId = parseInt(req.params.id);
       
       // Mock assigned couriers - initially empty, will show assignments after they're made
-      const assignedCouriers = [];
+      const assignedCouriers: any[] = [];
       
       res.json(assignedCouriers);
     } catch (error) {

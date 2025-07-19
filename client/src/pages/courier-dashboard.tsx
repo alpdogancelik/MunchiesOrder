@@ -140,35 +140,65 @@ function CourierProfileSetup() {
 export default function CourierDashboard() {
   const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [showNotificationPrompt, setShowNotificationPrompt] = useState(true);
+  const [courierProfile, setCourierProfile] = useState(null);
+  const [assignments, setAssignments] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  // Get courier profile
-  const { data: courierProfile, error: profileError } = useQuery({
-    queryKey: ["/api/courier/profile"],
-  });
+  // Fetch courier data without problematic React Query
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Try to get courier profile
+        const profileResponse = await fetch('/api/courier/profile', {
+          credentials: 'include'
+        });
+        
+        if (profileResponse.status === 404) {
+          setProfileError(true);
+          setLoading(false);
+          return;
+        }
+        
+        if (profileResponse.ok) {
+          const profile = await profileResponse.json();
+          setCourierProfile(profile);
+          
+          // Get assignments and orders if profile exists
+          const [assignmentsRes, ordersRes] = await Promise.all([
+            fetch('/api/courier/assignments', { credentials: 'include' }),
+            fetch('/api/courier/orders', { credentials: 'include' })
+          ]);
+          
+          if (assignmentsRes.ok) {
+            const assignmentsData = await assignmentsRes.json();
+            setAssignments(assignmentsData);
+          }
+          
+          if (ordersRes.ok) {
+            const ordersData = await ordersRes.json();
+            setOrders(ordersData);
+          }
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.log('Courier data fetch error:', error);
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
 
   const hasProfile = courierProfile && !profileError;
 
-  // Get courier assignments - only if profile exists
-  const { data: assignments = [] } = useQuery({
-    queryKey: ["/api/courier/assignments"],
-    enabled: hasProfile,
-  });
-
-  // Get courier orders - only if profile exists
-  const { data: orders = [] } = useQuery({
-    queryKey: ["/api/courier/orders"],
-    refetchInterval: 30000, // Refresh every 30 seconds
-    enabled: hasProfile,
-  });
-
-  // Show profile creation if no courier profile exists
-  if (profileError && String(profileError).includes('not found')) {
-    return <CourierProfileSetup />;
-  }
-  
-  if (!courierProfile) {
+  // Loading state
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-dark-300 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -176,36 +206,55 @@ export default function CourierDashboard() {
     );
   }
 
+  // Show profile creation if no courier profile exists
+  if (profileError) {
+    return <CourierProfileSetup />;
+  }
+
   // Update courier location
-  const updateLocationMutation = useMutation({
-    mutationFn: async ({ latitude, longitude }: { latitude: number; longitude: number }) => {
-      await apiRequest("POST", "/api/courier/location", { latitude, longitude });
-    },
-    onSuccess: () => {
+  const updateLocation = async (latitude: number, longitude: number) => {
+    try {
+      await fetch("/api/courier/location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ latitude, longitude })
+      });
       console.log("Location updated successfully");
-    },
-  });
+    } catch (error) {
+      console.log("Location update failed:", error);
+    }
+  };
 
   // Update order status
-  const updateOrderStatusMutation = useMutation({
-    mutationFn: async ({ orderId, status }: { orderId: number; status: string }) => {
-      await apiRequest("PUT", `/api/orders/${orderId}/status`, { status });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/courier/orders"] });
+  const updateOrderStatus = async (orderId: number, status: string) => {
+    try {
+      await fetch(`/api/orders/${orderId}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status })
+      });
+      
+      // Refresh orders
+      const ordersRes = await fetch('/api/courier/orders', { credentials: 'include' });
+      if (ordersRes.ok) {
+        const ordersData = await ordersRes.json();
+        setOrders(ordersData);
+      }
+      
       toast({
         title: "Order Updated",
         description: "Order status updated successfully",
       });
-    },
-    onError: () => {
+    } catch (error) {
       toast({
         title: "Update Failed",
         description: "Failed to update order status",
         variant: "destructive",
       });
-    },
-  });
+    }
+  };
 
   // Get user location
   useEffect(() => {
