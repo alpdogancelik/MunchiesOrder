@@ -113,17 +113,11 @@ export default function AdminDashboard() {
           <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
             You don't have any restaurants registered yet. Create your first restaurant to start managing orders with our secure platform.
           </p>
-          <Button
-            onClick={() => {
-              toast({
-                title: "Create Restaurant",
-                description: "Restaurant creation coming soon!",
-              });
-            }}
-            className="bg-primary text-white px-8 py-3 rounded-xl font-semibold"
-          >
-            Create Restaurant
-          </Button>
+          <Link href="/admin/create-restaurant">
+            <Button className="bg-primary text-white px-8 py-3 rounded-xl font-semibold">
+              Create Restaurant
+            </Button>
+          </Link>
         </div>
       ) : (
         <div className="px-4 py-6">

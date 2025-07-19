@@ -18,6 +18,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import MenuManagement from "@/pages/menu-management";
 import CourierTracking from "@/pages/courier-tracking";
 import CourierManagement from "@/pages/courier-management";
+import CreateRestaurant from "@/pages/create-restaurant";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -47,6 +48,7 @@ function Router() {
               <Route path="/admin" component={AdminDashboard} />
               <Route path="/admin/menu/:restaurantId" component={MenuManagement} />
               <Route path="/admin/couriers" component={CourierManagement} />
+              <Route path="/admin/create-restaurant" component={CreateRestaurant} />
               <Route path="/profile" component={Profile} />
             </>
           ) : (

@@ -22,13 +22,8 @@ export function LogoutButton({ variant = "outline" }: { variant?: "outline" | "g
         description: "You can now select a different user type",
       });
       
-      // Redirect to landing page to select user type again
-      setLocation("/landing");
-      
-      // Force page reload to clear authentication state
-      setTimeout(() => {
-        window.location.href = "/landing";
-      }, 100);
+      // Force complete page reload to clear all state
+      window.location.href = "/landing";
     },
     onError: () => {
       toast({
