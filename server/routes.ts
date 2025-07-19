@@ -10,6 +10,8 @@ import {
   insertOrderSchema,
   insertCartItemSchema,
   insertReviewSchema,
+  insertCourierAssignmentSchema,
+  insertCourierLocationSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -539,6 +541,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching reviews:", error);
       res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  // Courier assignment routes for restaurant owners
+  app.get('/api/restaurants/:id/couriers', isAuthenticated, async (req: any, res) => {
+    try {
+      const restaurantId = parseInt(req.params.id);
+      const couriers = await storage.getRestaurantCouriers(restaurantId);
+      res.json(couriers);
+    } catch (error) {
+      console.error("Error fetching restaurant couriers:", error);
+      res.status(500).json({ message: "Failed to fetch couriers" });
+    }
+  });
+
+  app.post('/api/restaurants/:id/couriers', isAuthenticated, async (req: any, res) => {
+    try {
+      const restaurantId = parseInt(req.params.id);
+      const { courierId } = req.body;
+      const assignment = await storage.assignCourierToRestaurant(courierId, restaurantId);
+      res.json(assignment);
+    } catch (error) {
+      console.error("Error assigning courier:", error);
+      res.status(400).json({ message: "Failed to assign courier" });
+    }
+  });
+
+  app.delete('/api/restaurants/:id/couriers/:courierId', isAuthenticated, async (req: any, res) => {
+    try {
+      const restaurantId = parseInt(req.params.id);
+      const courierId = req.params.courierId;
+      await storage.unassignCourierFromRestaurant(courierId, restaurantId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error unassigning courier:", error);
+      res.status(400).json({ message: "Failed to unassign courier" });
+    }
+  });
+
+  // Courier routes
+  app.get('/api/courier/assignments', isAuthenticated, async (req: any, res) => {
+    try {
+      const courierId = req.user.id;
+      const assignments = await storage.getCourierAssignments(courierId);
+      res.json(assignments);
+    } catch (error) {
+      console.error("Error fetching courier assignments:", error);
+      res.status(500).json({ message: "Failed to fetch assignments" });
+    }
+  });
+
+  app.get('/api/courier/orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const courierId = req.user.id;
+      const orders = await storage.getCourierOrders(courierId);
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching courier orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  app.post('/api/courier/location', isAuthenticated, async (req: any, res) => {
+    try {
+      const courierId = req.user.id;
+      const { latitude, longitude } = req.body;
+      const location = await storage.updateCourierLocation(courierId, latitude, longitude);
+      res.json(location);
+    } catch (error) {
+      console.error("Error updating courier location:", error);
+      res.status(400).json({ message: "Failed to update location" });
+    }
+  });
+
+  app.get('/api/courier/:id/location', isAuthenticated, async (req: any, res) => {
+    try {
+      const courierId = req.params.id;
+      const location = await storage.getCourierLocation(courierId);
+      res.json(location || null);
+    } catch (error) {
+      console.error("Error fetching courier location:", error);
+      res.status(500).json({ message: "Failed to fetch location" });
     }
   });
 

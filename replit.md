@@ -8,6 +8,20 @@ Munchies is a comprehensive food delivery application designed specifically for 
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (January 19, 2025)
+
+✓ Complete courier assignment system implemented with database schema
+✓ Restaurant-courier relationship tables (courierAssignments, courierLocations)
+✓ Full API routes for courier management and location tracking
+✓ Courier dashboard with real-time order tracking and status updates
+✓ Restaurant owner courier management interface
+✓ Enhanced order system with courier assignment capabilities
+✓ Live location tracking for delivery personnel
+✓ Proper role-based routing in App.tsx
+
+→ Next: Test complete order flow from student ordering to courier delivery
+→ Fix any remaining authentication edge cases and order status synchronization
+
 ## System Architecture
 
 ### Frontend Architecture

@@ -18,6 +18,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import MenuManagement from "@/pages/menu-management";
 import CourierTracking from "@/pages/courier-tracking";
 import CourierManagement from "@/pages/courier-management";
+import CourierDashboard from "@/pages/courier-dashboard";
 import CreateRestaurant from "@/pages/create-restaurant";
 
 function Router() {
@@ -38,8 +39,9 @@ function Router() {
           {/* Route based on user type */}
           {userType === 'courier' ? (
             <>
-              <Route path="/" component={CourierTracking} />
-              <Route path="/courier" component={CourierTracking} />
+              <Route path="/" component={CourierDashboard} />
+              <Route path="/courier" component={CourierDashboard} />
+              <Route path="/courier/tracking" component={CourierTracking} />
               <Route path="/profile" component={Profile} />
             </>
           ) : userType === 'restaurant' ? (

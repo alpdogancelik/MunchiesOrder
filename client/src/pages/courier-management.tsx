@@ -1,238 +1,228 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { MapPin, Clock, Phone, Navigation, Eye, Users, Truck } from "lucide-react";
+import { MapPin, Clock, Phone, Navigation, CheckCircle, Truck, UserPlus, UserMinus, Store } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
+import { LogoutButton } from "@/components/ui/logout-button";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
-// Live courier tracking component for restaurant owners
 export default function CourierManagement() {
-  const [selectedCourier, setSelectedCourier] = useState<number | null>(null);
+  const [selectedRestaurant, setSelectedRestaurant] = useState<number | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Mock courier data with live locations
-  const [couriers] = useState([
-    {
-      id: 1,
-      name: "Mehmet Özkan",
-      phone: "+90 555 111 2233",
-      status: 'delivering',
-      currentLocation: { lat: 41.015137, lng: 28.979530 },
-      address: "Near Campus Library",
-      orderId: 101,
-      customerName: "Ahmet Yılmaz",
-      estimatedArrival: "12 mins",
-      distance: "1.8 km from destination",
-      avatar: "👨‍🚴"
-    },
-    {
-      id: 2,
-      name: "Fatma Kaya",
-      phone: "+90 555 444 5566",
-      status: 'picking_up',
-      currentLocation: { lat: 41.013137, lng: 28.977530 },
-      address: "At Restaurant Kitchen",
-      orderId: 102,
-      customerName: "Elif Demir",
-      estimatedArrival: "5 mins to pickup",
-      distance: "0.2 km from restaurant",
-      avatar: "👩‍🚴"
-    },
-    {
-      id: 3,
-      name: "Can Yılmaz",
-      phone: "+90 555 777 8899",
-      status: 'available',
-      currentLocation: { lat: 41.016137, lng: 28.981530 },
-      address: "Campus Center",
-      orderId: null,
-      customerName: null,
-      estimatedArrival: "Available for pickup",
-      distance: "Ready for orders",
-      avatar: "👨‍🚴"
-    }
-  ]);
+  // Get restaurant owner's restaurants
+  const { data: restaurants = [] } = useQuery({
+    queryKey: ["/api/restaurants/owner/me"],
+  });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'available': return 'bg-green-500';
-      case 'picking_up': return 'bg-yellow-500';
-      case 'delivering': return 'bg-blue-500';
-      case 'offline': return 'bg-gray-500';
-      default: return 'bg-gray-500';
-    }
+  // Get couriers for selected restaurant
+  const { data: assignedCouriers = [] } = useQuery({
+    queryKey: ["/api/restaurants", selectedRestaurant, "couriers"],
+    enabled: !!selectedRestaurant,
+  });
+
+  // Mock available couriers (in real app, this would be from API)
+  const availableCouriers = [
+    { id: "courier_1", username: "mehmet_courier", firstName: "Mehmet", lastName: "Yılmaz", phone: "+90 555 123 4567" },
+    { id: "courier_2", username: "ayse_delivery", firstName: "Ayşe", lastName: "Kaya", phone: "+90 555 987 6543" },
+    { id: "courier_3", username: "fatih_bike", firstName: "Fatih", lastName: "Özkan", phone: "+90 555 456 7890" },
+  ];
+
+  const assignCourierMutation = useMutation({
+    mutationFn: async ({ restaurantId, courierId }: { restaurantId: number; courierId: string }) => {
+      await apiRequest("POST", `/api/restaurants/${restaurantId}/couriers`, { courierId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/restaurants", selectedRestaurant, "couriers"] });
+      toast({
+        title: "Courier Assigned",
+        description: "Courier successfully assigned to restaurant",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Assignment Failed",
+        description: "Failed to assign courier to restaurant",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const unassignCourierMutation = useMutation({
+    mutationFn: async ({ restaurantId, courierId }: { restaurantId: number; courierId: string }) => {
+      await apiRequest("DELETE", `/api/restaurants/${restaurantId}/couriers/${courierId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/restaurants", selectedRestaurant, "couriers"] });
+      toast({
+        title: "Courier Unassigned",
+        description: "Courier successfully removed from restaurant",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Unassignment Failed",
+        description: "Failed to remove courier from restaurant",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAssignCourier = (courierId: string) => {
+    if (!selectedRestaurant) return;
+    assignCourierMutation.mutate({ restaurantId: selectedRestaurant, courierId });
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'available': return 'Available';
-      case 'picking_up': return 'Picking Up Order';
-      case 'delivering': return 'Delivering';
-      case 'offline': return 'Offline';
-      default: return status;
-    }
+  const handleUnassignCourier = (courierId: string) => {
+    if (!selectedRestaurant) return;
+    unassignCourierMutation.mutate({ restaurantId: selectedRestaurant, courierId });
   };
+
+  const assignedCourierIds = assignedCouriers.map((ac: any) => ac.courierId);
+  const unassignedCouriers = availableCouriers.filter(c => !assignedCourierIds.includes(c.id));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-200">
       {/* Header */}
-      <div className="bg-white dark:bg-dark-200 px-4 py-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Logo size="sm" />
-            <div>
-              <h1 className="font-bold text-lg text-gray-900 dark:text-white">Courier Tracking</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Live courier locations and delivery status</p>
+      <div className="bg-white dark:bg-dark-100 border-b border-gray-100 dark:border-dark-100 sticky top-0 z-10">
+        <div className="max-w-md mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Logo size="sm" />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Courier Management</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Manage delivery team</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-sm text-gray-600 dark:text-gray-400">Live Updates</span>
+            <LogoutButton variant="ghost" size="sm" />
           </div>
         </div>
       </div>
 
-      {/* Summary Stats */}
-      <div className="p-4">
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">1</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Available</div>
-            </CardContent>
-          </Card>
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600">2</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Active Deliveries</div>
-            </CardContent>
-          </Card>
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-yellow-600">8.5</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Avg Time (min)</div>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="max-w-md mx-auto p-4 space-y-6">
+        {/* Restaurant Selection */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg text-gray-900 dark:text-white">Select Restaurant</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {restaurants.length === 0 ? (
+              <p className="text-gray-600 dark:text-gray-400 text-center py-4">
+                No restaurants found. Create a restaurant first.
+              </p>
+            ) : (
+              restaurants.map((restaurant: any) => (
+                <Button
+                  key={restaurant.id}
+                  variant={selectedRestaurant === restaurant.id ? "default" : "outline"}
+                  className="w-full justify-start"
+                  onClick={() => setSelectedRestaurant(restaurant.id)}
+                >
+                  <Store className="w-4 h-4 mr-2" />
+                  {restaurant.name}
+                </Button>
+              ))
+            )}
+          </CardContent>
+        </Card>
 
-        {/* Live Courier List */}
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Live Courier Tracking ({couriers.length} active)
-        </h2>
-
-        <div className="space-y-4">
-          {couriers.map((courier) => (
-            <Card key={courier.id} className="border-0 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="text-2xl">{courier.avatar}</div>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <p className="font-medium text-gray-900 dark:text-white">{courier.name}</p>
-                        <Badge className={`${getStatusColor(courier.status)} text-white text-xs`}>
-                          {getStatusText(courier.status)}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{courier.phone}</p>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
-                      <Phone size={14} />
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Eye size={14} />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Current Location */}
-                <div className="mb-3 p-3 bg-gray-50 dark:bg-dark-100 rounded-lg">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <MapPin className="text-primary" size={16} />
-                    <span className="font-medium text-gray-800 dark:text-gray-300">Current Location</span>
-                  </div>
-                  <p className="text-sm text-gray-700 dark:text-gray-400">{courier.address}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                    📍 {courier.currentLocation.lat.toFixed(6)}, {courier.currentLocation.lng.toFixed(6)}
+        {selectedRestaurant && (
+          <>
+            {/* Assigned Couriers */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg text-gray-900 dark:text-white flex items-center">
+                  <Truck className="w-5 h-5 mr-2" />
+                  Assigned Couriers ({assignedCouriers.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {assignedCouriers.length === 0 ? (
+                  <p className="text-gray-600 dark:text-gray-400 text-center py-4">
+                    No couriers assigned to this restaurant
                   </p>
-                </div>
-
-                {/* Active Order Info */}
-                {courier.orderId && (
-                  <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center space-x-2 mb-1">
-                          <Truck className="text-blue-600" size={16} />
-                          <span className="font-medium text-blue-800 dark:text-blue-400">
-                            Order #{courier.orderId}
-                          </span>
+                ) : (
+                  assignedCouriers.map((assignment: any) => (
+                    <div key={assignment.id} className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center">
+                          <Truck className="w-5 h-5 text-green-600 dark:text-green-400" />
                         </div>
-                        <p className="text-sm text-blue-700 dark:text-blue-300">
-                          Customer: {courier.customerName}
-                        </p>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {assignment.courier.firstName} {assignment.courier.lastName}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">@{assignment.courier.username}</p>
+                        </div>
                       </div>
-                      <Button variant="outline" size="sm">
-                        View Order
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleUnassignCourier(assignment.courierId)}
+                        disabled={unassignCourierMutation.isPending}
+                      >
+                        <UserMinus className="w-4 h-4" />
                       </Button>
                     </div>
-                  </div>
+                  ))
                 )}
-
-                {/* Delivery Status */}
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center space-x-4 text-gray-600 dark:text-gray-400">
-                    <div className="flex items-center space-x-1">
-                      <Clock size={14} />
-                      <span>{courier.estimatedArrival}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Navigation size={14} />
-                      <span>{courier.distance}</span>
-                    </div>
-                  </div>
-                  
-                  {courier.status === 'available' && (
-                    <Button size="sm" variant="outline">
-                      Assign Order
-                    </Button>
-                  )}
-                </div>
-
-                {/* Live GPS Tracking */}
-                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-dark-100">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">Live GPS tracking active</span>
-                    </div>
-                    <Button variant="ghost" size="sm" className="text-xs">
-                      View on Map
-                    </Button>
-                  </div>
-                </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
 
-        {/* Map Integration Placeholder */}
-        <Card className="mt-6 border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base">Live Map View</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-gray-100 dark:bg-dark-100 h-64 rounded-lg flex items-center justify-center">
-              <div className="text-center text-gray-500 dark:text-gray-400">
-                <MapPin size={48} className="mx-auto mb-2" />
-                <p>Interactive map showing all courier locations</p>
-                <p className="text-sm">Real-time GPS tracking integration</p>
-                <Button variant="outline" className="mt-3">
-                  Open Full Map
-                </Button>
-              </div>
+            {/* Available Couriers */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg text-gray-900 dark:text-white flex items-center">
+                  <UserPlus className="w-5 h-5 mr-2" />
+                  Available Couriers ({unassignedCouriers.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {unassignedCouriers.length === 0 ? (
+                  <p className="text-gray-600 dark:text-gray-400 text-center py-4">
+                    All available couriers are already assigned
+                  </p>
+                ) : (
+                  unassignedCouriers.map((courier) => (
+                    <div key={courier.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-100 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                          <Truck className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {courier.firstName} {courier.lastName}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">@{courier.username}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-500">{courier.phone}</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleAssignCourier(courier.id)}
+                        disabled={assignCourierMutation.isPending}
+                      >
+                        <UserPlus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        {/* Instructions */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+              <p className="mb-2">📍 Assigned couriers will receive orders from this restaurant</p>
+              <p>🚚 They can track deliveries and update order status in real-time</p>
             </div>
           </CardContent>
         </Card>

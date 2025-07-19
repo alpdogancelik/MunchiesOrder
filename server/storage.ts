@@ -9,6 +9,8 @@ import {
   cartItems,
   reviews,
   securityLogs,
+  courierAssignments,
+  courierLocations,
   type User,
   type UpsertUser,
   type SecurityLog,
@@ -29,6 +31,10 @@ import {
   type InsertCartItem,
   type Review,
   type InsertReview,
+  type CourierAssignment,
+  type InsertCourierAssignment,
+  type CourierLocation,
+  type InsertCourierLocation,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql } from "drizzle-orm";
@@ -89,6 +95,20 @@ export interface IStorage {
   // Security operations
   createSecurityLog(log: InsertSecurityLog): Promise<SecurityLog>;
   getSecurityLogs(userId?: string): Promise<SecurityLog[]>;
+
+  // Courier assignment operations
+  assignCourierToRestaurant(courierId: string, restaurantId: number): Promise<CourierAssignment>;
+  unassignCourierFromRestaurant(courierId: string, restaurantId: number): Promise<void>;
+  getRestaurantCouriers(restaurantId: number): Promise<(CourierAssignment & { courier: User })[]>;
+  getCourierAssignments(courierId: string): Promise<(CourierAssignment & { restaurant: Restaurant })[]>;
+  
+  // Courier location operations
+  updateCourierLocation(courierId: string, latitude: number, longitude: number): Promise<CourierLocation>;
+  getCourierLocation(courierId: string): Promise<CourierLocation | undefined>;
+  
+  // Enhanced order operations for courier tracking
+  getCourierOrders(courierId: string): Promise<(Order & { restaurant: Restaurant; orderItems: (OrderItem & { menuItem: MenuItem })[] })[]>;
+  assignOrderToCourier(orderId: number, courierId?: string): Promise<Order>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -593,6 +613,185 @@ export class DatabaseStorage implements IStorage {
       .from(securityLogs)
       .orderBy(desc(securityLogs.createdAt))
       .limit(100);
+  }
+
+  // Courier assignment operations
+  async assignCourierToRestaurant(courierId: string, restaurantId: number): Promise<CourierAssignment> {
+    const [assignment] = await db
+      .insert(courierAssignments)
+      .values({
+        courierId,
+        restaurantId,
+        isActive: true,
+      })
+      .onConflictDoUpdate({
+        target: [courierAssignments.courierId, courierAssignments.restaurantId],
+        set: {
+          isActive: true,
+          assignedAt: new Date(),
+        },
+      })
+      .returning();
+    return assignment;
+  }
+
+  async unassignCourierFromRestaurant(courierId: string, restaurantId: number): Promise<void> {
+    await db
+      .update(courierAssignments)
+      .set({ isActive: false })
+      .where(
+        and(
+          eq(courierAssignments.courierId, courierId),
+          eq(courierAssignments.restaurantId, restaurantId)
+        )
+      );
+  }
+
+  async getRestaurantCouriers(restaurantId: number): Promise<(CourierAssignment & { courier: User })[]> {
+    return await db
+      .select({
+        id: courierAssignments.id,
+        courierId: courierAssignments.courierId,
+        restaurantId: courierAssignments.restaurantId,
+        isActive: courierAssignments.isActive,
+        assignedAt: courierAssignments.assignedAt,
+        courier: users,
+      })
+      .from(courierAssignments)
+      .innerJoin(users, eq(courierAssignments.courierId, users.id))
+      .where(
+        and(
+          eq(courierAssignments.restaurantId, restaurantId),
+          eq(courierAssignments.isActive, true)
+        )
+      );
+  }
+
+  async getCourierAssignments(courierId: string): Promise<(CourierAssignment & { restaurant: Restaurant })[]> {
+    return await db
+      .select({
+        id: courierAssignments.id,
+        courierId: courierAssignments.courierId,
+        restaurantId: courierAssignments.restaurantId,
+        isActive: courierAssignments.isActive,
+        assignedAt: courierAssignments.assignedAt,
+        restaurant: restaurants,
+      })
+      .from(courierAssignments)
+      .innerJoin(restaurants, eq(courierAssignments.restaurantId, restaurants.id))
+      .where(
+        and(
+          eq(courierAssignments.courierId, courierId),
+          eq(courierAssignments.isActive, true)
+        )
+      );
+  }
+
+  // Courier location operations
+  async updateCourierLocation(courierId: string, latitude: number, longitude: number): Promise<CourierLocation> {
+    const [location] = await db
+      .insert(courierLocations)
+      .values({
+        courierId,
+        latitude: latitude.toString(),
+        longitude: longitude.toString(),
+      })
+      .onConflictDoUpdate({
+        target: courierLocations.courierId,
+        set: {
+          latitude: latitude.toString(),
+          longitude: longitude.toString(),
+          lastUpdated: new Date(),
+        },
+      })
+      .returning();
+    return location;
+  }
+
+  async getCourierLocation(courierId: string): Promise<CourierLocation | undefined> {
+    const [location] = await db
+      .select()
+      .from(courierLocations)
+      .where(eq(courierLocations.courierId, courierId));
+    return location;
+  }
+
+  // Enhanced order operations for courier tracking
+  async getCourierOrders(courierId: string): Promise<(Order & { restaurant: Restaurant; orderItems: (OrderItem & { menuItem: MenuItem })[] })[]> {
+    // Get orders from restaurants assigned to this courier
+    const assignments = await this.getCourierAssignments(courierId);
+    const restaurantIds = assignments.map(a => a.restaurantId);
+    
+    if (restaurantIds.length === 0) {
+      return [];
+    }
+
+    const ordersData = await db
+      .select({
+        id: orders.id,
+        userId: orders.userId,
+        restaurantId: orders.restaurantId,
+        addressId: orders.addressId,
+        status: orders.status,
+        subtotal: orders.subtotal,
+        deliveryFee: orders.deliveryFee,
+        serviceFee: orders.serviceFee,
+        total: orders.total,
+        paymentMethod: orders.paymentMethod,
+        paymentStatus: orders.paymentStatus,
+        iyzico_payment_id: orders.iyzico_payment_id,
+        iyzico_conversation_id: orders.iyzico_conversation_id,
+        specialInstructions: orders.specialInstructions,
+        estimatedDeliveryTime: orders.estimatedDeliveryTime,
+        createdAt: orders.createdAt,
+        updatedAt: orders.updatedAt,
+        restaurant: restaurants,
+      })
+      .from(orders)
+      .innerJoin(restaurants, eq(orders.restaurantId, restaurants.id))
+      .where(and(
+        sql`${orders.restaurantId} = ANY(${sql`ARRAY[${sql.join(restaurantIds.map(id => sql`${id}`), sql`, `)}]`})`,
+        sql`${orders.status} IN ('confirmed', 'preparing', 'ready', 'out_for_delivery')`
+      ))
+      .orderBy(desc(orders.createdAt));
+
+    // Get order items for each order
+    const ordersWithItems = await Promise.all(
+      ordersData.map(async (order) => {
+        const items = await db
+          .select({
+            id: orderItems.id,
+            orderId: orderItems.orderId,
+            menuItemId: orderItems.menuItemId,
+            quantity: orderItems.quantity,
+            price: orderItems.price,
+            notes: orderItems.notes,
+            menuItem: menuItems,
+          })
+          .from(orderItems)
+          .innerJoin(menuItems, eq(orderItems.menuItemId, menuItems.id))
+          .where(eq(orderItems.orderId, order.id));
+
+        return {
+          ...order,
+          orderItems: items,
+        };
+      })
+    );
+
+    return ordersWithItems;
+  }
+
+  async assignOrderToCourier(orderId: number, courierId?: string): Promise<Order> {
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({ 
+        status: courierId ? 'assigned_to_courier' : 'ready',
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.id, orderId))
+      .returning();
+    return updatedOrder;
   }
 }
 

@@ -60,6 +60,10 @@ export const restaurants = pgTable("restaurants", {
   name: varchar("name").notNull(),
   description: text("description"),
   cuisine: varchar("cuisine").notNull(),
+  address: text("address"),
+  phone: varchar("phone"),
+  openingHours: varchar("opening_hours").notNull().default("9:00-22:00"),
+  deliveryRadius: integer("delivery_radius").notNull().default(5),
   imageUrl: text("image_url"),
   rating: decimal("rating", { precision: 3, scale: 2 }).default("0"),
   reviewCount: integer("review_count").default(0),
@@ -134,6 +138,24 @@ export const cartItems = pgTable("cart_items", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Courier assignments to restaurants
+export const courierAssignments = pgTable("courier_assignments", {
+  id: serial("id").primaryKey(),
+  courierId: varchar("courier_id").notNull(),
+  restaurantId: integer("restaurant_id").notNull(),
+  isActive: boolean("is_active").default(true),
+  assignedAt: timestamp("assigned_at").defaultNow(),
+});
+
+// Courier locations (for live tracking)
+export const courierLocations = pgTable("courier_locations", {
+  id: serial("id").primaryKey(),
+  courierId: varchar("courier_id").notNull(),
+  latitude: decimal("latitude", { precision: 10, scale: 8 }),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+});
+
 // Reviews
 export const reviews = pgTable("reviews", {
   id: serial("id").primaryKey(),
@@ -164,6 +186,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   reviews: many(reviews),
   restaurants: many(restaurants),
   securityLogs: many(securityLogs),
+  courierAssignments: many(courierAssignments),
+  courierLocations: many(courierLocations),
 }));
 
 export const addressesRelations = relations(addresses, ({ one }) => ({
@@ -182,6 +206,25 @@ export const restaurantsRelations = relations(restaurants, ({ one, many }) => ({
   menuItems: many(menuItems),
   orders: many(orders),
   reviews: many(reviews),
+  courierAssignments: many(courierAssignments),
+}));
+
+export const courierAssignmentsRelations = relations(courierAssignments, ({ one }) => ({
+  courier: one(users, {
+    fields: [courierAssignments.courierId],
+    references: [users.id],
+  }),
+  restaurant: one(restaurants, {
+    fields: [courierAssignments.restaurantId],
+    references: [restaurants.id],
+  }),
+}));
+
+export const courierLocationsRelations = relations(courierLocations, ({ one }) => ({
+  courier: one(users, {
+    fields: [courierLocations.courierId],
+    references: [users.id],
+  }),
 }));
 
 export const menuCategoriesRelations = relations(menuCategories, ({ one, many }) => ({
@@ -299,6 +342,16 @@ export const insertSecurityLogSchema = createInsertSchema(securityLogs).omit({
   createdAt: true,
 });
 
+export const insertCourierAssignmentSchema = createInsertSchema(courierAssignments).omit({
+  id: true,
+  assignedAt: true,
+});
+
+export const insertCourierLocationSchema = createInsertSchema(courierLocations).omit({
+  id: true,
+  lastUpdated: true,
+});
+
 // Security logs relations
 export const securityLogsRelations = relations(securityLogs, ({ one }) => ({
   user: one(users, {
@@ -328,3 +381,7 @@ export type Review = typeof reviews.$inferSelect;
 export type InsertReview = z.infer<typeof insertReviewSchema>;
 export type SecurityLog = typeof securityLogs.$inferSelect;
 export type InsertSecurityLog = z.infer<typeof insertSecurityLogSchema>;
+export type CourierAssignment = typeof courierAssignments.$inferSelect;
+export type InsertCourierAssignment = z.infer<typeof insertCourierAssignmentSchema>;
+export type CourierLocation = typeof courierLocations.$inferSelect;
+export type InsertCourierLocation = z.infer<typeof insertCourierLocationSchema>;
