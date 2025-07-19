@@ -108,11 +108,11 @@ export default function Profile() {
               onClick={() => {
                 toast({
                   title: "Edit Profile",
-                  description: "Profile editing coming soon!",
+                  description: "Enhanced profile editing with Google security coming soon!",
                 });
               }}
             >
-              Edit Profile
+              🔒 Edit Profile (Secure)
             </Button>
           </CardContent>
         </Card>
@@ -275,6 +275,12 @@ export default function Profile() {
               </Button>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Cozy Software Branding */}
+        <div className="text-center py-8 text-gray-400 dark:text-gray-500 text-xs">
+          <p className="mb-2">🔒 Secured with Enterprise-grade Authentication</p>
+          <p>Powered by Cozy Software</p>
         </div>
       </div>
     </div>

@@ -231,8 +231,8 @@ export default function Payment() {
                     <i className="fas fa-credit-card text-primary text-sm"></i>
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium text-gray-800 dark:text-white">iyzico Secure Payment</p>
-                    <p className="text-gray-600 dark:text-gray-400 text-xs">Pay securely with credit/debit card</p>
+                    <p className="font-medium text-gray-800 dark:text-white">🔒 iyzico Secure Payment</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-xs">Bank-grade security • SSL encrypted • PCI compliant</p>
                   </div>
                   <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
                     <i className="fas fa-check text-white text-xs"></i>
@@ -280,7 +280,7 @@ export default function Payment() {
               <div>
                 <p className="font-medium text-blue-800 dark:text-blue-300 mb-1">Order Confirmation</p>
                 <p className="text-blue-600 dark:text-blue-400 text-sm">
-                  By placing this order, you agree to our terms and conditions. 
+                  🔒 Secured by Cozy Software authentication system. By placing this order, you agree to our terms and conditions. 
                   Estimated delivery time: {restaurant.deliveryTime}.
                 </p>
               </div>

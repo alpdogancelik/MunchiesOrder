@@ -74,7 +74,7 @@ export default function Cart() {
                 <i className="fas fa-arrow-left text-xl"></i>
               </Button>
             </Link>
-            <h1 className="text-xl font-semibold text-gray-800 dark:text-white">Your Cart</h1>
+            <h1 className="text-xl font-semibold text-gray-800 dark:text-white">🛒 Your Cart</h1>
           </div>
         </div>
 
@@ -119,7 +119,7 @@ export default function Cart() {
                 <i className="fas fa-arrow-left text-xl"></i>
               </Button>
             </Link>
-            <h1 className="text-xl font-semibold text-gray-800 dark:text-white">Your Order</h1>
+            <h1 className="text-xl font-semibold text-gray-800 dark:text-white">🛒 Your Order</h1>
           </div>
           <Button
             variant="ghost"
@@ -229,6 +229,11 @@ export default function Cart() {
               Proceed to Payment • ₺{total.toFixed(2)}
             </Button>
           </Link>
+          
+          {/* Cozy Software Branding */}
+          <div className="text-center pt-2 pb-1 text-gray-400 dark:text-gray-500 text-xs">
+            🔒 Secure checkout powered by Cozy Software
+          </div>
         </div>
       )}
     </div>

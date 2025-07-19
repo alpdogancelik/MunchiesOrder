@@ -95,7 +95,7 @@ export default function AdminDashboard() {
                 <i className="fas fa-arrow-left text-xl"></i>
               </Button>
             </Link>
-            <h1 className="text-xl font-semibold text-gray-800 dark:text-white">Restaurant Dashboard</h1>
+            <h1 className="text-xl font-semibold text-gray-800 dark:text-white">🍳 Restaurant Dashboard</h1>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -111,7 +111,7 @@ export default function AdminDashboard() {
           </div>
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">No Restaurant Found</h2>
           <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
-            You don't have any restaurants registered yet. Create your first restaurant to start managing orders.
+            You don't have any restaurants registered yet. Create your first restaurant to start managing orders with our secure platform.
           </p>
           <Button
             onClick={() => {
@@ -275,6 +275,12 @@ export default function AdminDashboard() {
               )}
             </CardContent>
           </Card>
+
+          {/* Cozy Software Branding */}
+          <div className="text-center py-8 text-gray-400 dark:text-gray-500 text-xs">
+            <p className="mb-2">🔒 Enterprise Restaurant Management System</p>
+            <p>Powered by Cozy Software</p>
+          </div>
         </div>
       )}
     </div>

@@ -17,7 +17,11 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import MenuManagement from "@/pages/menu-management";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  // Check user type from localStorage and user data
+  const userType = localStorage.getItem('userType') || 
+    ((user as any)?.email?.includes('@restaurant') ? 'restaurant' : 'student');
 
   return (
     <Switch>
@@ -25,15 +29,25 @@ function Router() {
         <Route path="/" component={Landing} />
       ) : (
         <>
-          <Route path="/" component={Home} />
-          <Route path="/restaurant/:id" component={Restaurant} />
-          <Route path="/cart" component={Cart} />
-          <Route path="/payment" component={Payment} />
-          <Route path="/order/:id" component={OrderTracking} />
-          <Route path="/profile" component={Profile} />
-          <Route path="/addresses" component={AddressManagement} />
-          <Route path="/admin" component={AdminDashboard} />
-          <Route path="/admin/menu/:restaurantId" component={MenuManagement} />
+          {/* Route based on user type */}
+          {userType === 'restaurant' ? (
+            <>
+              <Route path="/" component={AdminDashboard} />
+              <Route path="/admin" component={AdminDashboard} />
+              <Route path="/admin/menu/:restaurantId" component={MenuManagement} />
+              <Route path="/profile" component={Profile} />
+            </>
+          ) : (
+            <>
+              <Route path="/" component={Home} />
+              <Route path="/restaurant/:id" component={Restaurant} />
+              <Route path="/cart" component={Cart} />
+              <Route path="/payment" component={Payment} />
+              <Route path="/order/:id" component={OrderTracking} />
+              <Route path="/profile" component={Profile} />
+              <Route path="/addresses" component={AddressManagement} />
+            </>
+          )}
         </>
       )}
       <Route component={NotFound} />

@@ -8,8 +8,11 @@ import {
   orderItems,
   cartItems,
   reviews,
+  securityLogs,
   type User,
   type UpsertUser,
+  type SecurityLog,
+  type InsertSecurityLog,
   type Address,
   type InsertAddress,
   type Restaurant,
@@ -79,6 +82,10 @@ export interface IStorage {
   // Review operations
   createReview(review: InsertReview): Promise<Review>;
   getRestaurantReviews(restaurantId: number): Promise<(Review & { user: User })[]>;
+  
+  // Security operations
+  createSecurityLog(log: InsertSecurityLog): Promise<SecurityLog>;
+  getSecurityLogs(userId?: string): Promise<SecurityLog[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -232,16 +239,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMenuItems(restaurantId: number, categoryId?: number): Promise<MenuItem[]> {
-    let query = db
-      .select()
-      .from(menuItems)
-      .where(eq(menuItems.restaurantId, restaurantId));
-
     if (categoryId) {
-      query = query.where(eq(menuItems.categoryId, categoryId));
+      return await db
+        .select()
+        .from(menuItems)
+        .where(and(eq(menuItems.restaurantId, restaurantId), eq(menuItems.categoryId, categoryId)))
+        .orderBy(desc(menuItems.isPopular), asc(menuItems.name));
     }
 
-    return await query.orderBy(desc(menuItems.isPopular), asc(menuItems.name));
+    return await db
+      .select()
+      .from(menuItems)
+      .where(eq(menuItems.restaurantId, restaurantId))
+      .orderBy(desc(menuItems.isPopular), asc(menuItems.name));
   }
 
   async getMenuItem(id: number): Promise<MenuItem | undefined> {
@@ -395,7 +405,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRestaurantOrders(restaurantId: number, status?: string): Promise<(Order & { user: User; address: Address; orderItems: (OrderItem & { menuItem: MenuItem })[] })[]> {
-    let query = db
+    const whereConditions = status 
+      ? and(eq(orders.restaurantId, restaurantId), eq(orders.status, status))
+      : eq(orders.restaurantId, restaurantId);
+
+    const ordersData = await db
       .select({
         id: orders.id,
         userId: orders.userId,
@@ -420,13 +434,8 @@ export class DatabaseStorage implements IStorage {
       .from(orders)
       .innerJoin(users, eq(orders.userId, users.id))
       .innerJoin(addresses, eq(orders.addressId, addresses.id))
-      .where(eq(orders.restaurantId, restaurantId));
-
-    if (status) {
-      query = query.where(eq(orders.status, status));
-    }
-
-    const ordersData = await query.orderBy(desc(orders.createdAt));
+      .where(whereConditions)
+      .orderBy(desc(orders.createdAt));
 
     // Get order items for each order
     const ordersWithItems = await Promise.all(
@@ -528,6 +537,29 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(reviews.userId, users.id))
       .where(eq(reviews.restaurantId, restaurantId))
       .orderBy(desc(reviews.createdAt));
+  }
+
+  // Security operations
+  async createSecurityLog(log: InsertSecurityLog): Promise<SecurityLog> {
+    const [newLog] = await db
+      .insert(securityLogs)
+      .values(log)
+      .returning();
+    return newLog;
+  }
+
+  async getSecurityLogs(userId?: string): Promise<SecurityLog[]> {
+    let query = db
+      .select()
+      .from(securityLogs)
+      .orderBy(desc(securityLogs.createdAt))
+      .limit(100);
+
+    if (userId) {
+      query = query.where(eq(securityLogs.userId, userId));
+    }
+
+    return await query;
   }
 }
 

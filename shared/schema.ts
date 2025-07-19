@@ -143,6 +143,17 @@ export const reviews = pgTable("reviews", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Security audit log
+export const securityLogs = pgTable("security_logs", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id"),
+  event: varchar("event").notNull(), // login, logout, failed_login, password_change, etc.
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  details: jsonb("details"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   addresses: many(addresses),
@@ -150,6 +161,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   cartItems: many(cartItems),
   reviews: many(reviews),
   restaurants: many(restaurants),
+  securityLogs: many(securityLogs),
 }));
 
 export const addressesRelations = relations(addresses, ({ one }) => ({
@@ -280,6 +292,19 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
   createdAt: true,
 });
 
+export const insertSecurityLogSchema = createInsertSchema(securityLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Security logs relations
+export const securityLogsRelations = relations(securityLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [securityLogs.userId],
+    references: [users.id],
+  }),
+}));
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -299,3 +324,5 @@ export type CartItem = typeof cartItems.$inferSelect;
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type Review = typeof reviews.$inferSelect;
 export type InsertReview = z.infer<typeof insertReviewSchema>;
+export type SecurityLog = typeof securityLogs.$inferSelect;
+export type InsertSecurityLog = z.infer<typeof insertSecurityLogSchema>;
