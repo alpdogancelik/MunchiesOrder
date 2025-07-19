@@ -754,11 +754,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const restaurantId = parseInt(req.params.id);
       const { courierId } = req.body;
+      
+      console.log(`Assigning courier ${courierId} to restaurant ${restaurantId}`);
       const assignment = await storage.assignCourierToRestaurant(courierId, restaurantId);
+      
       res.json(assignment);
     } catch (error) {
       console.error("Error assigning courier:", error);
-      res.status(400).json({ message: "Failed to assign courier" });
+      res.status(500).json({ message: "Failed to assign courier" });
     }
   });
 
@@ -824,10 +827,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/courier/profile', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      console.log(`Fetching courier profile for user: ${userId}`);
+      
       const courierProfile = await storage.getCourierProfile(userId);
       if (!courierProfile) {
+        console.log(`No courier profile found for user: ${userId}`);
         return res.status(404).json({ message: "Courier profile not found" });
       }
+      
+      console.log(`Found courier profile:`, courierProfile);
       res.json(courierProfile);
     } catch (error) {
       console.error("Error fetching courier profile:", error);
