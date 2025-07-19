@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNotifications } from "@/hooks/useNotifications";
 import { NotificationPrompt } from "@/components/ui/notification-prompt";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,22 +11,160 @@ import { LogoutButton } from "@/components/ui/logout-button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+// Courier Profile Setup Component
+function CourierProfileSetup() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const createProfileMutation = useMutation({
+    mutationFn: async (profileData: any) => {
+      return await apiRequest('/api/courier/profile', {
+        method: 'POST',
+        body: JSON.stringify(profileData),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/courier/profile'] });
+      toast({
+        title: "Profile created successfully",
+        description: "You can now start receiving delivery orders",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Error creating profile",
+        description: error.message || "Failed to create courier profile",
+      });
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const formData = new FormData(e.currentTarget);
+    const profileData = {
+      vehicleType: formData.get('vehicleType') as string,
+      licensePlate: formData.get('licensePlate') as string,
+      phoneNumber: formData.get('phoneNumber') as string,
+      deliveryRadius: parseInt(formData.get('deliveryRadius') as string) || 5,
+      isAvailable: true,
+      isOnline: false,
+    };
+
+    try {
+      await createProfileMutation.mutateAsync(profileData);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Complete Your Courier Profile</h1>
+          <p className="text-gray-600 mt-2">Fill in your details to start delivering orders</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Vehicle Type *
+            </label>
+            <select name="vehicleType" required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+              <option value="">Select vehicle type</option>
+              <option value="bicycle">Bicycle</option>
+              <option value="motorcycle">Motorcycle</option>
+              <option value="car">Car</option>
+              <option value="scooter">Scooter</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              License Plate
+            </label>
+            <input
+              type="text"
+              name="licensePlate"
+              placeholder="e.g., KB 123 AB"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Phone Number *
+            </label>
+            <input
+              type="tel"
+              name="phoneNumber"
+              required
+              placeholder="+90 555 123 4567"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Delivery Radius (km) *
+            </label>
+            <input
+              type="number"
+              name="deliveryRadius"
+              required
+              min="1"
+              max="20"
+              defaultValue="5"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="w-full"
+          >
+            {isSubmitting ? "Creating Profile..." : "Create Courier Profile"}
+          </Button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function CourierDashboard() {
   const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [showNotificationPrompt, setShowNotificationPrompt] = useState(true);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get courier assignments
-  const { data: assignments = [] } = useQuery({
-    queryKey: ["/api/courier/assignments"],
+  // Get courier profile
+  const { data: courierProfile, error: profileError } = useQuery({
+    queryKey: ["/api/courier/profile"],
   });
 
-  // Get courier orders
+  // Get courier assignments - only if profile exists
+  const { data: assignments = [] } = useQuery({
+    queryKey: ["/api/courier/assignments"],
+    enabled: !!courierProfile,
+  });
+
+  // Get courier orders - only if profile exists
   const { data: orders = [] } = useQuery({
     queryKey: ["/api/courier/orders"],
     refetchInterval: 30000, // Refresh every 30 seconds
+    enabled: !!courierProfile,
   });
+
+  // Show profile creation if no courier profile exists
+  if (profileError && String(profileError).includes('not found')) {
+    return <CourierProfileSetup />;
+  }
 
   // Update courier location
   const updateLocationMutation = useMutation({

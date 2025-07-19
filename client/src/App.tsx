@@ -28,7 +28,8 @@ function Router() {
 
   // Check user type from localStorage and user data
   const userType = localStorage.getItem('userType') || 
-    ((user as any)?.email?.includes('@restaurant') ? 'restaurant' : 'student');
+    ((user as any)?.role === 'restaurant_owner' ? 'restaurant' : 
+     (user as any)?.role === 'courier' ? 'courier' : 'user');
 
   return (
     <Switch>

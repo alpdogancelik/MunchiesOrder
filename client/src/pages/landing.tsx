@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,28 +6,28 @@ import { ArrowRight, Utensils, Clock, Shield, Star } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 
 export default function Landing() {
-  const [userType, setUserType] = useState<'student' | 'restaurant' | 'courier'>('student');
+  const [userType, setUserType] = useState<'user' | 'restaurant' | 'courier'>('user');
 
   const features = [
     {
       icon: <Utensils className="w-6 h-6" />,
-      title: "Wide Selection",
-      description: "Choose from diverse restaurants and cuisines across campus"
+      title: "Local Flavors",
+      description: "Authentic Turkish and international cuisines crafted by campus chefs who understand student tastes"
     },
     {
       icon: <Clock className="w-6 h-6" />,
-      title: "Fast Delivery",
-      description: "Quick delivery with real-time tracking to your location"
+      title: "Campus Speed",
+      description: "Average 15-minute delivery across Kalkanlı - perfect for study breaks and meal times"
     },
     {
       icon: <Shield className="w-6 h-6" />,
-      title: "Secure Payment",
-      description: "Safe and reliable payment processing with multiple options"
+      title: "Student-Safe",
+      description: "Secure payment with Turkish Lira, designed for student budgets and campus life"
     },
     {
       icon: <Star className="w-6 h-6" />,
-      title: "Quality Assured",
-      description: "Reviewed restaurants with ratings from fellow students"
+      title: "Community Choice",
+      description: "Rated by fellow METU NCC students who share your taste and standards"
     }
   ];
 
@@ -56,11 +56,12 @@ export default function Landing() {
         {/* Hero Section */}
         <div className="pt-12 pb-8 text-center">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
-            Campus Food
-            <span className="block text-orange-500">Delivered Fast</span>
+            <span className="text-3xl">🍽️</span>
+            <span className="block mt-2">Taste the Campus</span>
+            <span className="block text-orange-500 text-3xl">Crave & Receive</span>
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-sm mx-auto">
-            Order from your favorite campus restaurants and track delivery in real-time
+          <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-sm mx-auto leading-relaxed">
+            From METU NCC's finest kitchens to your doorstep. Every meal tells a story, every bite creates a memory.
           </p>
           
           {/* User Type Selection */}
@@ -68,12 +69,12 @@ export default function Landing() {
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">I am a:</p>
             <div className="grid grid-cols-3 gap-2">
               <Button
-                variant={userType === 'student' ? 'default' : 'outline'}
+                variant={userType === 'user' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setUserType('student')}
+                onClick={() => setUserType('user')}
                 className="h-12 text-xs"
               >
-                Student
+                User
               </Button>
               <Button
                 variant={userType === 'restaurant' ? 'default' : 'outline'}
@@ -107,7 +108,7 @@ export default function Landing() {
         {/* Features */}
         <div className="py-8">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white text-center mb-8">
-            Why Choose Munchies?
+            Made for Campus Life 🎓
           </h2>
           <div className="space-y-4">
             {features.map((feature, index) => (
@@ -134,26 +135,32 @@ export default function Landing() {
 
         {/* Stats */}
         <div className="py-8">
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">15+</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Restaurants</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">500+</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Students</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">15min</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Avg Delivery</div>
+          <div className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-2xl p-6 text-center">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Trusted by Our Community</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">25+</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Campus Restaurants</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">800+</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Happy Students</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">12min</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Avg Delivery</div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
         <footer className="py-8 text-center border-t border-gray-200 dark:border-gray-700">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Made for Kalkanlı Campus Students
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+            🏫 Proudly serving METU Northern Cyprus Campus
+          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            From Kalkanlı with love - connecting taste to community
           </p>
         </footer>
       </div>

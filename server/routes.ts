@@ -12,6 +12,8 @@ import {
   insertReviewSchema,
   insertCourierAssignmentSchema,
   insertCourierLocationSchema,
+  insertCourierSchema,
+  insertCourierRestaurantAssignmentSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -682,6 +684,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching courier location:", error);
       res.status(500).json({ message: "Failed to fetch location" });
+    }
+  });
+
+  // Courier profile routes (new system)
+  app.get('/api/courier/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const courierProfile = await storage.getCourierProfile(userId);
+      if (!courierProfile) {
+        return res.status(404).json({ message: "Courier profile not found" });
+      }
+      res.json(courierProfile);
+    } catch (error) {
+      console.error("Error fetching courier profile:", error);
+      res.status(500).json({ message: "Failed to fetch courier profile" });
+    }
+  });
+
+  app.post('/api/courier/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const courierData = insertCourierSchema.parse({ ...req.body, userId });
+      const courierProfile = await storage.createCourierProfile(courierData);
+      res.json(courierProfile);
+    } catch (error) {
+      console.error("Error creating courier profile:", error);
+      res.status(400).json({ message: "Failed to create courier profile" });
+    }
+  });
+
+  app.put('/api/courier/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const courierData = insertCourierSchema.partial().parse(req.body);
+      const updatedProfile = await storage.updateCourierProfile(userId, courierData);
+      res.json(updatedProfile);
+    } catch (error) {
+      console.error("Error updating courier profile:", error);
+      res.status(400).json({ message: "Failed to update courier profile" });
+    }
+  });
+
+  app.put('/api/courier/online-status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { isOnline } = req.body;
+      const updatedProfile = await storage.updateCourierOnlineStatus(userId, isOnline);
+      res.json(updatedProfile);
+    } catch (error) {
+      console.error("Error updating courier online status:", error);
+      res.status(400).json({ message: "Failed to update online status" });
     }
   });
 

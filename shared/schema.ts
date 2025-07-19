@@ -73,6 +73,34 @@ export const restaurants = pgTable("restaurants", {
   minimumOrder: decimal("minimum_order", { precision: 8, scale: 2 }).default("0"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Couriers
+export const couriers = pgTable("couriers", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  vehicleType: varchar("vehicle_type").notNull(), // 'bike', 'motorcycle', 'car'
+  licensePlate: varchar("license_plate"),
+  phoneNumber: varchar("phone_number").notNull(),
+  isAvailable: boolean("is_available").default(true),
+  currentLatitude: decimal("current_latitude", { precision: 10, scale: 8 }),
+  currentLongitude: decimal("current_longitude", { precision: 11, scale: 8 }),
+  deliveryRadius: integer("delivery_radius").notNull().default(5), // km
+  rating: decimal("rating", { precision: 3, scale: 2 }).default("5.0"),
+  totalDeliveries: integer("total_deliveries").default(0),
+  isOnline: boolean("is_online").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Courier Restaurant Assignments
+export const courierRestaurantAssignments = pgTable("courier_restaurant_assignments", {
+  id: serial("id").primaryKey(),
+  courierId: integer("courier_id").notNull(),
+  restaurantId: integer("restaurant_id").notNull(),
+  assignedAt: timestamp("assigned_at").defaultNow(),
+  isActive: boolean("is_active").default(true),
 });
 
 // Menu categories
@@ -180,7 +208,7 @@ export const securityLogs = pgTable("security_logs", {
 });
 
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   addresses: many(addresses),
   orders: many(orders),
   cartItems: many(cartItems),
@@ -189,6 +217,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   securityLogs: many(securityLogs),
   courierAssignments: many(courierAssignments),
   courierLocations: many(courierLocations),
+  courierProfile: one(couriers),
 }));
 
 export const addressesRelations = relations(addresses, ({ one }) => ({
@@ -208,6 +237,26 @@ export const restaurantsRelations = relations(restaurants, ({ one, many }) => ({
   orders: many(orders),
   reviews: many(reviews),
   courierAssignments: many(courierAssignments),
+  courierRestaurantAssignments: many(courierRestaurantAssignments),
+}));
+
+export const couriersRelations = relations(couriers, ({ one, many }) => ({
+  user: one(users, {
+    fields: [couriers.userId],
+    references: [users.id],
+  }),
+  restaurantAssignments: many(courierRestaurantAssignments),
+}));
+
+export const courierRestaurantAssignmentsRelations = relations(courierRestaurantAssignments, ({ one }) => ({
+  courier: one(couriers, {
+    fields: [courierRestaurantAssignments.courierId],
+    references: [couriers.id],
+  }),
+  restaurant: one(restaurants, {
+    fields: [courierRestaurantAssignments.restaurantId],
+    references: [restaurants.id],
+  }),
 }));
 
 export const courierAssignmentsRelations = relations(courierAssignments, ({ one }) => ({
@@ -353,6 +402,17 @@ export const insertCourierLocationSchema = createInsertSchema(courierLocations).
   lastUpdated: true,
 });
 
+export const insertCourierSchema = createInsertSchema(couriers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCourierRestaurantAssignmentSchema = createInsertSchema(courierRestaurantAssignments).omit({
+  id: true,
+  assignedAt: true,
+});
+
 // Security logs relations
 export const securityLogsRelations = relations(securityLogs, ({ one }) => ({
   user: one(users, {
@@ -386,3 +446,7 @@ export type CourierAssignment = typeof courierAssignments.$inferSelect;
 export type InsertCourierAssignment = z.infer<typeof insertCourierAssignmentSchema>;
 export type CourierLocation = typeof courierLocations.$inferSelect;
 export type InsertCourierLocation = z.infer<typeof insertCourierLocationSchema>;
+export type Courier = typeof couriers.$inferSelect;
+export type InsertCourier = z.infer<typeof insertCourierSchema>;
+export type CourierRestaurantAssignment = typeof courierRestaurantAssignments.$inferSelect;
+export type InsertCourierRestaurantAssignment = z.infer<typeof insertCourierRestaurantAssignmentSchema>;
