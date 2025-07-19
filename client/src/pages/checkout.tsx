@@ -71,7 +71,7 @@ export default function Checkout() {
         
         // Send receipt email
         await sendReceipt(order);
-        setLocation("/orders");
+        setLocation("/");
       } else {
         // Handle online card payment
         handleCardPayment(order);

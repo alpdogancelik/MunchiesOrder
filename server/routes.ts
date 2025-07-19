@@ -353,10 +353,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, orderId, orderData } = req.body;
       
-      // For now, just log the receipt - we'll implement SendGrid later
-      console.log(`Receipt for order #${orderId} would be sent to ${email}:`, orderData);
+      const { sendOrderReceipt } = await import('./email');
+      const emailSent = await sendOrderReceipt(orderData);
       
-      res.json({ success: true, message: "Receipt sent successfully" });
+      if (emailSent) {
+        res.json({ success: true, message: "Receipt sent successfully" });
+      } else {
+        throw new Error("Failed to send email");
+      }
     } catch (error) {
       console.error("Error sending receipt:", error);
       res.status(500).json({ message: "Failed to send receipt" });
