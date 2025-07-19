@@ -1,0 +1,515 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { setupAuth, isAuthenticated } from "./replitAuth";
+import { 
+  insertAddressSchema,
+  insertRestaurantSchema,
+  insertMenuCategorySchema,
+  insertMenuItemSchema,
+  insertOrderSchema,
+  insertCartItemSchema,
+  insertReviewSchema,
+} from "@shared/schema";
+import { z } from "zod";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Auth middleware
+  await setupAuth(app);
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Address routes
+  app.get('/api/addresses', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const addresses = await storage.getUserAddresses(userId);
+      res.json(addresses);
+    } catch (error) {
+      console.error("Error fetching addresses:", error);
+      res.status(500).json({ message: "Failed to fetch addresses" });
+    }
+  });
+
+  app.post('/api/addresses', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const addressData = insertAddressSchema.parse({ ...req.body, userId });
+      const address = await storage.createAddress(addressData);
+      res.json(address);
+    } catch (error) {
+      console.error("Error creating address:", error);
+      res.status(400).json({ message: "Failed to create address" });
+    }
+  });
+
+  app.put('/api/addresses/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const addressId = parseInt(req.params.id);
+      const addressData = insertAddressSchema.partial().parse(req.body);
+      const address = await storage.updateAddress(addressId, addressData);
+      res.json(address);
+    } catch (error) {
+      console.error("Error updating address:", error);
+      res.status(400).json({ message: "Failed to update address" });
+    }
+  });
+
+  app.delete('/api/addresses/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const addressId = parseInt(req.params.id);
+      await storage.deleteAddress(addressId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting address:", error);
+      res.status(400).json({ message: "Failed to delete address" });
+    }
+  });
+
+  app.put('/api/addresses/:id/default', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const addressId = parseInt(req.params.id);
+      await storage.setDefaultAddress(userId, addressId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error setting default address:", error);
+      res.status(400).json({ message: "Failed to set default address" });
+    }
+  });
+
+  // Restaurant routes
+  app.get('/api/restaurants', async (req, res) => {
+    try {
+      const restaurants = await storage.getRestaurants();
+      res.json(restaurants);
+    } catch (error) {
+      console.error("Error fetching restaurants:", error);
+      res.status(500).json({ message: "Failed to fetch restaurants" });
+    }
+  });
+
+  app.get('/api/restaurants/:id', async (req, res) => {
+    try {
+      const restaurantId = parseInt(req.params.id);
+      const restaurant = await storage.getRestaurant(restaurantId);
+      if (!restaurant) {
+        return res.status(404).json({ message: "Restaurant not found" });
+      }
+      res.json(restaurant);
+    } catch (error) {
+      console.error("Error fetching restaurant:", error);
+      res.status(500).json({ message: "Failed to fetch restaurant" });
+    }
+  });
+
+  app.get('/api/restaurants/owner/me', isAuthenticated, async (req: any, res) => {
+    try {
+      const ownerId = req.user.claims.sub;
+      const restaurants = await storage.getRestaurantsByOwner(ownerId);
+      res.json(restaurants);
+    } catch (error) {
+      console.error("Error fetching owner restaurants:", error);
+      res.status(500).json({ message: "Failed to fetch restaurants" });
+    }
+  });
+
+  app.post('/api/restaurants', isAuthenticated, async (req: any, res) => {
+    try {
+      const ownerId = req.user.claims.sub;
+      const restaurantData = insertRestaurantSchema.parse({ ...req.body, ownerId });
+      const restaurant = await storage.createRestaurant(restaurantData);
+      res.json(restaurant);
+    } catch (error) {
+      console.error("Error creating restaurant:", error);
+      res.status(400).json({ message: "Failed to create restaurant" });
+    }
+  });
+
+  app.put('/api/restaurants/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const restaurantId = parseInt(req.params.id);
+      const restaurantData = insertRestaurantSchema.partial().parse(req.body);
+      const restaurant = await storage.updateRestaurant(restaurantId, restaurantData);
+      res.json(restaurant);
+    } catch (error) {
+      console.error("Error updating restaurant:", error);
+      res.status(400).json({ message: "Failed to update restaurant" });
+    }
+  });
+
+  // Menu routes
+  app.get('/api/restaurants/:id/categories', async (req, res) => {
+    try {
+      const restaurantId = parseInt(req.params.id);
+      const categories = await storage.getMenuCategories(restaurantId);
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching menu categories:", error);
+      res.status(500).json({ message: "Failed to fetch menu categories" });
+    }
+  });
+
+  app.get('/api/restaurants/:id/menu', async (req, res) => {
+    try {
+      const restaurantId = parseInt(req.params.id);
+      const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
+      const menuItems = await storage.getMenuItems(restaurantId, categoryId);
+      res.json(menuItems);
+    } catch (error) {
+      console.error("Error fetching menu items:", error);
+      res.status(500).json({ message: "Failed to fetch menu items" });
+    }
+  });
+
+  app.post('/api/restaurants/:id/categories', isAuthenticated, async (req: any, res) => {
+    try {
+      const restaurantId = parseInt(req.params.id);
+      const categoryData = insertMenuCategorySchema.parse({ ...req.body, restaurantId });
+      const category = await storage.createMenuCategory(categoryData);
+      res.json(category);
+    } catch (error) {
+      console.error("Error creating menu category:", error);
+      res.status(400).json({ message: "Failed to create menu category" });
+    }
+  });
+
+  app.post('/api/restaurants/:id/menu', isAuthenticated, async (req: any, res) => {
+    try {
+      const restaurantId = parseInt(req.params.id);
+      const menuItemData = insertMenuItemSchema.parse({ ...req.body, restaurantId });
+      const menuItem = await storage.createMenuItem(menuItemData);
+      res.json(menuItem);
+    } catch (error) {
+      console.error("Error creating menu item:", error);
+      res.status(400).json({ message: "Failed to create menu item" });
+    }
+  });
+
+  app.put('/api/menu-items/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const menuItemId = parseInt(req.params.id);
+      const menuItemData = insertMenuItemSchema.partial().parse(req.body);
+      const menuItem = await storage.updateMenuItem(menuItemId, menuItemData);
+      res.json(menuItem);
+    } catch (error) {
+      console.error("Error updating menu item:", error);
+      res.status(400).json({ message: "Failed to update menu item" });
+    }
+  });
+
+  app.delete('/api/menu-items/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const menuItemId = parseInt(req.params.id);
+      await storage.deleteMenuItem(menuItemId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting menu item:", error);
+      res.status(400).json({ message: "Failed to delete menu item" });
+    }
+  });
+
+  // Cart routes
+  app.get('/api/cart', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const cartItems = await storage.getCartItems(userId);
+      res.json(cartItems);
+    } catch (error) {
+      console.error("Error fetching cart:", error);
+      res.status(500).json({ message: "Failed to fetch cart" });
+    }
+  });
+
+  app.post('/api/cart', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const cartItemData = insertCartItemSchema.parse({ ...req.body, userId });
+      const cartItem = await storage.addToCart(cartItemData);
+      res.json(cartItem);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      res.status(400).json({ message: "Failed to add to cart" });
+    }
+  });
+
+  app.put('/api/cart/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const cartItemId = parseInt(req.params.id);
+      const { quantity } = req.body;
+      const cartItem = await storage.updateCartItem(cartItemId, quantity);
+      res.json(cartItem);
+    } catch (error) {
+      console.error("Error updating cart item:", error);
+      res.status(400).json({ message: "Failed to update cart item" });
+    }
+  });
+
+  app.delete('/api/cart/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const cartItemId = parseInt(req.params.id);
+      await storage.removeFromCart(cartItemId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing from cart:", error);
+      res.status(400).json({ message: "Failed to remove from cart" });
+    }
+  });
+
+  app.delete('/api/cart', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await storage.clearCart(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+      res.status(400).json({ message: "Failed to clear cart" });
+    }
+  });
+
+  // Order routes
+  app.get('/api/orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const orders = await storage.getUserOrders(userId);
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  app.get('/api/orders/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      res.status(500).json({ message: "Failed to fetch order" });
+    }
+  });
+
+  app.get('/api/restaurants/:id/orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const restaurantId = parseInt(req.params.id);
+      const status = req.query.status as string;
+      const orders = await storage.getRestaurantOrders(restaurantId, status);
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching restaurant orders:", error);
+      res.status(500).json({ message: "Failed to fetch restaurant orders" });
+    }
+  });
+
+  app.post('/api/orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { orderData, orderItems } = req.body;
+      
+      const validatedOrderData = insertOrderSchema.parse({ ...orderData, userId });
+      const order = await storage.createOrder(validatedOrderData, orderItems);
+      
+      // Clear cart after order creation
+      await storage.clearCart(userId);
+      
+      res.json(order);
+    } catch (error) {
+      console.error("Error creating order:", error);
+      res.status(400).json({ message: "Failed to create order" });
+    }
+  });
+
+  app.put('/api/orders/:id/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      const { status } = req.body;
+      const order = await storage.updateOrderStatus(orderId, status);
+      res.json(order);
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      res.status(400).json({ message: "Failed to update order status" });
+    }
+  });
+
+  app.put('/api/orders/:id/payment', isAuthenticated, async (req: any, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      const { paymentStatus, paymentId } = req.body;
+      const order = await storage.updateOrderPayment(orderId, paymentStatus, paymentId);
+      res.json(order);
+    } catch (error) {
+      console.error("Error updating order payment:", error);
+      res.status(400).json({ message: "Failed to update order payment" });
+    }
+  });
+
+  // iyzico payment routes
+  app.post('/api/payment/iyzico/initiate', isAuthenticated, async (req: any, res) => {
+    try {
+      const { orderId, orderData } = req.body;
+      
+      // TODO: Implement iyzico payment initiation
+      // This should create a payment request with iyzico and return payment form URL
+      const iyzico = require('iyzipay');
+      
+      const iyzicoClient = new iyzico({
+        apiKey: process.env.IYZICO_API_KEY || 'sandbox-api-key',
+        secretKey: process.env.IYZICO_SECRET_KEY || 'sandbox-secret-key',
+        uri: process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com'
+      });
+
+      const request = {
+        locale: iyzico.LOCALE.TR,
+        conversationId: `order-${orderId}`,
+        price: orderData.total,
+        paidPrice: orderData.total,
+        currency: iyzico.CURRENCY.TRY,
+        installment: '1',
+        basketId: `basket-${orderId}`,
+        paymentChannel: iyzico.PAYMENT_CHANNEL.WEB,
+        paymentGroup: iyzico.PAYMENT_GROUP.PRODUCT,
+        callbackUrl: `${req.protocol}://${req.hostname}/api/payment/iyzico/callback`,
+        enabledInstallments: [2, 3, 6, 9],
+        buyer: {
+          id: req.user.claims.sub,
+          name: req.user.claims.first_name || 'Student',
+          surname: req.user.claims.last_name || 'User',
+          gsmNumber: '+905555555555',
+          email: req.user.claims.email || 'student@emu.edu.tr',
+          identityNumber: '74300864791',
+          lastLoginDate: '2015-10-05 12:43:35',
+          registrationDate: '2013-04-21 15:12:09',
+          registrationAddress: orderData.address,
+          ip: req.ip,
+          city: 'Kalkanlı',
+          country: 'Cyprus',
+          zipCode: '99628'
+        },
+        shippingAddress: {
+          contactName: `${req.user.claims.first_name || 'Student'} ${req.user.claims.last_name || 'User'}`,
+          city: 'Kalkanlı',
+          country: 'Cyprus',
+          address: orderData.address,
+          zipCode: '99628'
+        },
+        billingAddress: {
+          contactName: `${req.user.claims.first_name || 'Student'} ${req.user.claims.last_name || 'User'}`,
+          city: 'Kalkanlı',
+          country: 'Cyprus',
+          address: orderData.address,
+          zipCode: '99628'
+        },
+        basketItems: orderData.items.map((item: any, index: number) => ({
+          id: `item-${index}`,
+          name: item.name,
+          category1: 'Food',
+          category2: 'Restaurant',
+          itemType: iyzico.BASKET_ITEM_TYPE.PHYSICAL,
+          price: (parseFloat(item.price) * item.quantity).toString()
+        }))
+      };
+
+      iyzicoClient.checkoutFormInitialize.create(request, (err: any, result: any) => {
+        if (err) {
+          console.error('iyzico error:', err);
+          return res.status(400).json({ message: 'Payment initiation failed' });
+        }
+        
+        res.json({
+          success: true,
+          paymentPageUrl: result.paymentPageUrl,
+          token: result.token
+        });
+      });
+    } catch (error) {
+      console.error("Error initiating payment:", error);
+      res.status(500).json({ message: "Failed to initiate payment" });
+    }
+  });
+
+  app.post('/api/payment/iyzico/callback', async (req, res) => {
+    try {
+      const { token } = req.body;
+      
+      // TODO: Implement iyzico payment verification
+      // This should verify the payment status with iyzico
+      const iyzico = require('iyzipay');
+      
+      const iyzicoClient = new iyzico({
+        apiKey: process.env.IYZICO_API_KEY || 'sandbox-api-key',
+        secretKey: process.env.IYZICO_SECRET_KEY || 'sandbox-secret-key',
+        uri: process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com'
+      });
+
+      const request = {
+        locale: iyzico.LOCALE.TR,
+        conversationId: 'payment-verification',
+        token: token
+      };
+
+      iyzicoClient.checkoutForm.retrieve(request, async (err: any, result: any) => {
+        if (err) {
+          console.error('iyzico verification error:', err);
+          return res.status(400).json({ message: 'Payment verification failed' });
+        }
+
+        if (result.status === 'success') {
+          // Extract order ID from conversation ID
+          const orderId = parseInt(result.conversationId.replace('order-', ''));
+          
+          // Update order payment status
+          await storage.updateOrderPayment(orderId, 'completed', result.paymentId);
+          await storage.updateOrderStatus(orderId, 'confirmed');
+          
+          res.json({ success: true, orderId });
+        } else {
+          res.status(400).json({ message: 'Payment failed' });
+        }
+      });
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      res.status(500).json({ message: "Failed to verify payment" });
+    }
+  });
+
+  // Review routes
+  app.post('/api/reviews', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const reviewData = insertReviewSchema.parse({ ...req.body, userId });
+      const review = await storage.createReview(reviewData);
+      res.json(review);
+    } catch (error) {
+      console.error("Error creating review:", error);
+      res.status(400).json({ message: "Failed to create review" });
+    }
+  });
+
+  app.get('/api/restaurants/:id/reviews', async (req, res) => {
+    try {
+      const restaurantId = parseInt(req.params.id);
+      const reviews = await storage.getRestaurantReviews(restaurantId);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
