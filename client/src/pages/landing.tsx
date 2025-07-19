@@ -2,14 +2,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChefHat, UtensilsCrossed, Truck, Star, Users, Store } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "wouter";
 
 export default function Landing() {
   const [userType, setUserType] = useState<'student' | 'restaurant' | null>(null);
+  const [, setLocation] = useLocation();
 
   const handleLogin = (type: 'student' | 'restaurant') => {
     // Store user type in localStorage for post-login routing
     localStorage.setItem('userType', type);
-    window.location.href = '/api/login';
+    setLocation('/auth');
   };
 
   if (userType === null) {

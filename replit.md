@@ -35,19 +35,21 @@ Preferred communication style: Simple, everyday language.
 ## Key Components
 
 ### Authentication System
-- **Provider**: Replit Auth integration with OIDC
+- **Provider**: Custom authentication with username/password
 - **Session Storage**: PostgreSQL-based session store with 7-day TTL
 - **Authorization**: Route-level protection with middleware
-- **User Management**: Automatic user creation and profile management
+- **User Management**: Registration and login with secure password hashing
+- **Security Features**: Comprehensive audit logging for all auth events
 
 ### Database Schema
-- **Users**: Profile information, addresses, and authentication data
+- **Users**: Profile information with username/email/password authentication
 - **Restaurants**: Restaurant details, ownership, and operational status
 - **Menu System**: Categories and items with availability and pricing
 - **Orders**: Order management with status tracking and item details
 - **Cart**: Persistent shopping cart with user association
 - **Reviews**: Rating and review system for restaurants
-- **Sessions**: Secure session storage for authentication
+- **Sessions**: Secure session storage for custom authentication
+- **Security Logs**: Comprehensive audit trail for authentication events
 
 ### Payment Integration
 - **Primary**: iyzico payment gateway for Turkish market

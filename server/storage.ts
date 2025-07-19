@@ -34,8 +34,11 @@ import { db } from "./db";
 import { eq, and, desc, asc, sql } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations (required for Replit Auth)
+  // User operations (custom auth)
   getUser(id: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: { id: string; username: string; email: string; password: string; firstName?: string; lastName?: string; }): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
 
   // Address operations
@@ -93,6 +96,33 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(user: { id: string; username: string; email: string; password: string; firstName?: string; lastName?: string; }): Promise<User> {
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        password: user.password,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return newUser;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
@@ -549,17 +579,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSecurityLogs(userId?: string): Promise<SecurityLog[]> {
-    let query = db
+    if (userId) {
+      return await db
+        .select()
+        .from(securityLogs)
+        .where(eq(securityLogs.userId, userId))
+        .orderBy(desc(securityLogs.createdAt))
+        .limit(100);
+    }
+
+    return await db
       .select()
       .from(securityLogs)
       .orderBy(desc(securityLogs.createdAt))
       .limit(100);
-
-    if (userId) {
-      query = query.where(eq(securityLogs.userId, userId));
-    }
-
-    return await query;
   }
 }
 
