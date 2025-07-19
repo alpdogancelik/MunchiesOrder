@@ -22,7 +22,9 @@ export default function CreateRestaurant() {
     address: "",
     phone: "",
     openingHours: "9:00-22:00",
-    deliveryRadius: 5
+    deliveryRadius: 5,
+    deliveryTime: "30-45 mins",
+    deliveryFee: "5"
   });
 
   const createRestaurantMutation = useMutation({
@@ -195,6 +197,34 @@ export default function CreateRestaurant() {
                   className="mt-2"
                   min="1"
                   max="50"
+                />
+              </div>
+
+              {/* Delivery Time */}
+              <div>
+                <Label htmlFor="deliveryTime" className="text-gray-700 dark:text-gray-300">
+                  Estimated Delivery Time
+                </Label>
+                <Input
+                  id="deliveryTime"
+                  value={formData.deliveryTime}
+                  onChange={(e) => handleChange("deliveryTime", e.target.value)}
+                  placeholder="30-45 mins"
+                  className="mt-2"
+                />
+              </div>
+
+              {/* Delivery Fee */}
+              <div>
+                <Label htmlFor="deliveryFee" className="text-gray-700 dark:text-gray-300">
+                  Delivery Fee (₺)
+                </Label>
+                <Input
+                  id="deliveryFee"
+                  value={formData.deliveryFee}
+                  onChange={(e) => handleChange("deliveryFee", e.target.value)}
+                  placeholder="5"
+                  className="mt-2"
                 />
               </div>
 

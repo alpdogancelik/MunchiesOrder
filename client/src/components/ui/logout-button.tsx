@@ -22,8 +22,10 @@ export function LogoutButton({ variant = "outline" }: { variant?: "outline" | "g
         description: "You can now select a different user type",
       });
       
-      // Force complete page reload to clear all state
-      window.location.href = "/landing";
+      // Small delay then redirect to ensure session is cleared
+      setTimeout(() => {
+        window.location.replace("/landing");
+      }, 200);
     },
     onError: () => {
       toast({

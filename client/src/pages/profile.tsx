@@ -259,11 +259,21 @@ export default function Profile() {
           </Card>
 
           <Card>
-            <CardContent className="p-0">
+            <CardContent className="p-4">
               <Button
                 variant="ghost"
-                className="w-full flex items-center justify-between p-4 h-auto hover:bg-gray-50 dark:hover:bg-dark-100 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                onClick={() => window.location.href = '/api/logout'}
+                className="w-full flex items-center justify-center p-4 h-auto hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                onClick={() => {
+                  // Clear user type and redirect properly
+                  localStorage.removeItem('userType');
+                  fetch('/api/logout', { method: 'POST', credentials: 'include' })
+                    .then(() => {
+                      window.location.replace('/landing');
+                    })
+                    .catch(() => {
+                      window.location.replace('/landing');
+                    });
+                }}
               >
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center justify-center">
@@ -271,7 +281,6 @@ export default function Profile() {
                   </div>
                   <p className="font-medium">Sign Out</p>
                 </div>
-                <i className="fas fa-chevron-right"></i>
               </Button>
             </CardContent>
           </Card>
