@@ -115,6 +115,28 @@ export default function AuthPage() {
         });
         return;
       }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast({
+          title: "Invalid Email",
+          description: "Please enter a valid email address",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate username format (no spaces, special characters)
+      const usernameRegex = /^[a-zA-Z0-9_]+$/;
+      if (!usernameRegex.test(formData.username)) {
+        toast({
+          title: "Invalid Username",
+          description: "Username can only contain letters, numbers, and underscores",
+          variant: "destructive",
+        });
+        return;
+      }
       
       registerMutation.mutate({
         username: formData.username,
