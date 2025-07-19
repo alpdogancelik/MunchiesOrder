@@ -66,14 +66,14 @@ Preferred communication style: Simple, everyday language.
 ## Data Flow
 
 ### User Journey
-1. **Authentication**: Users authenticate via Replit Auth
+1. **Authentication**: Users register/login with custom username/password system
 2. **Address Setup**: Users configure delivery addresses
-3. **Restaurant Browsing**: Browse available restaurants with filtering
+3. **Restaurant Browsing**: Browse available restaurants with search and filtering
 4. **Menu Exploration**: View categorized menu items with details
 5. **Cart Management**: Add items to persistent shopping cart
 6. **Order Placement**: Select payment method and place order
 7. **Payment Processing**: Handle payment via iyzico or cash
-8. **Order Tracking**: Real-time status updates and delivery tracking
+8. **Order Tracking**: Real-time status updates and delivery tracking with order history
 
 ### Admin Workflow
 1. **Restaurant Management**: Create and configure restaurant profiles
@@ -83,7 +83,9 @@ Preferred communication style: Simple, everyday language.
 
 ### API Architecture
 - **RESTful Design**: Standard HTTP methods with JSON payloads
-- **Authentication Middleware**: Protected routes with user context
+- **Authentication Middleware**: Protected routes with custom auth and user context
+- **Search & Filtering**: Restaurant search by name, description, cuisine with category filters
+- **Order Management**: Order history with status-based filtering
 - **Error Handling**: Consistent error responses with proper status codes
 - **Query Optimization**: Efficient database queries with proper indexing
 

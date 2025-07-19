@@ -25,10 +25,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup custom authentication
   setupAuth(app);
 
+  // User routes
+  app.get('/api/user', isAuthenticated, async (req: any, res) => {
+    try {
+      res.json(req.user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
   // Address routes
   app.get('/api/addresses', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const addresses = await storage.getUserAddresses(userId);
       res.json(addresses);
     } catch (error) {
@@ -39,7 +49,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/addresses', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const addressData = insertAddressSchema.parse({ ...req.body, userId });
       const address = await storage.createAddress(addressData);
       res.json(address);
@@ -74,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/addresses/:id/default', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const addressId = parseInt(req.params.id);
       await storage.setDefaultAddress(userId, addressId);
       res.json({ success: true });
@@ -87,7 +97,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Restaurant routes
   app.get('/api/restaurants', async (req, res) => {
     try {
-      const restaurants = await storage.getRestaurants();
+      const { search, category } = req.query;
+      let restaurants = await storage.getRestaurants();
+      
+      // Apply search filter
+      if (search && typeof search === 'string') {
+        const searchLower = search.toLowerCase();
+        restaurants = restaurants.filter(restaurant => 
+          restaurant.name.toLowerCase().includes(searchLower) ||
+          restaurant.description?.toLowerCase().includes(searchLower) ||
+          restaurant.cuisine?.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      // Apply category filter
+      if (category && typeof category === 'string') {
+        restaurants = restaurants.filter(restaurant => 
+          restaurant.cuisine?.toLowerCase() === category.toLowerCase()
+        );
+      }
+      
       res.json(restaurants);
     } catch (error) {
       console.error("Error fetching restaurants:", error);
@@ -111,7 +140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/restaurants/owner/me', isAuthenticated, async (req: any, res) => {
     try {
-      const ownerId = req.user.claims.sub;
+      const ownerId = req.user.id;
       const restaurants = await storage.getRestaurantsByOwner(ownerId);
       res.json(restaurants);
     } catch (error) {
@@ -122,7 +151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/restaurants', isAuthenticated, async (req: any, res) => {
     try {
-      const ownerId = req.user.claims.sub;
+      const ownerId = req.user.id;
       const restaurantData = insertRestaurantSchema.parse({ ...req.body, ownerId });
       const restaurant = await storage.createRestaurant(restaurantData);
       res.json(restaurant);
@@ -218,7 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cart routes
   app.get('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const cartItems = await storage.getCartItems(userId);
       res.json(cartItems);
     } catch (error) {
@@ -229,7 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const cartItemData = insertCartItemSchema.parse({ ...req.body, userId });
       const cartItem = await storage.addToCart(cartItemData);
       res.json(cartItem);
@@ -264,7 +293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       await storage.clearCart(userId);
       res.json({ success: true });
     } catch (error) {
@@ -276,8 +305,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Order routes
   app.get('/api/orders', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const orders = await storage.getUserOrders(userId);
+      const userId = req.user.id;
+      const { status } = req.query;
+      let orders = await storage.getUserOrders(userId);
+      
+      // Apply status filter for order history
+      if (status && typeof status === 'string') {
+        orders = orders.filter(order => order.status === status);
+      }
+      
       res.json(orders);
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -313,7 +349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/orders', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { orderData, orderItems } = req.body;
       
       const validatedOrderData = insertOrderSchema.parse({ ...orderData, userId });
@@ -381,7 +417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         callbackUrl: `${req.protocol}://${req.hostname}/api/payment/iyzico/callback`,
         enabledInstallments: [2, 3, 6, 9],
         buyer: {
-          id: req.user.claims.sub,
+          id: req.user.id,
           name: req.user.claims.first_name || 'Student',
           surname: req.user.claims.last_name || 'User',
           gsmNumber: '+905555555555',
@@ -485,7 +521,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Review routes
   app.post('/api/reviews', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const reviewData = insertReviewSchema.parse({ ...req.body, userId });
       const review = await storage.createReview(reviewData);
       res.json(review);
