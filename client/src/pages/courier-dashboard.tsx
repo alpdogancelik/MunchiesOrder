@@ -148,21 +148,23 @@ export default function CourierDashboard() {
     queryKey: ["/api/courier/profile"],
   });
 
+  const hasProfile = courierProfile && !profileError;
+
   // Get courier assignments - only if profile exists
   const { data: assignments = [] } = useQuery({
     queryKey: ["/api/courier/assignments"],
-    enabled: !!courierProfile,
+    enabled: hasProfile,
   });
 
   // Get courier orders - only if profile exists
   const { data: orders = [] } = useQuery({
     queryKey: ["/api/courier/orders"],
     refetchInterval: 30000, // Refresh every 30 seconds
-    enabled: !!courierProfile,
+    enabled: hasProfile,
   });
 
   // Show profile creation if no courier profile exists
-  if (profileError && String(profileError).includes('not found')) {
+  if (!hasProfile && profileError && String(profileError).includes('not found')) {
     return <CourierProfileSetup />;
   }
 
@@ -199,7 +201,7 @@ export default function CourierDashboard() {
 
   // Get user location
   useEffect(() => {
-    if (navigator.geolocation && courierProfile) {
+    if (navigator.geolocation && hasProfile) {
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;

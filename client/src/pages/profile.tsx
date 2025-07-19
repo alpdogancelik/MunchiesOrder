@@ -1,13 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { NotificationManager } from "@/components/ui/notifications";
 
 export default function Profile() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -162,6 +164,25 @@ export default function Profile() {
                   <i className="fas fa-chevron-right text-gray-400"></i>
                 </Button>
               </div>
+
+              <div className="border-t border-gray-100 dark:border-dark-100">
+                <Button
+                  variant="ghost"
+                  className="w-full flex items-center justify-between p-4 h-auto hover:bg-gray-50 dark:hover:bg-dark-100"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
+                      <i className="fas fa-bell text-green-600 dark:text-green-400"></i>
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium text-gray-800 dark:text-white">Notifications</p>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm">Manage notifications</p>
+                    </div>
+                  </div>
+                  <i className="fas fa-chevron-right text-gray-400"></i>
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -170,12 +191,7 @@ export default function Profile() {
               <Button
                 variant="ghost"
                 className="w-full flex items-center justify-between p-4 h-auto hover:bg-gray-50 dark:hover:bg-dark-100"
-                onClick={() => {
-                  toast({
-                    title: "Notifications",
-                    description: "Notification settings coming soon!",
-                  });
-                }}
+                onClick={() => setShowNotifications(!showNotifications)}
               >
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
@@ -284,6 +300,11 @@ export default function Profile() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Notifications Component */}
+          {showNotifications && (
+            <NotificationManager />
+          )}
         </div>
 
         {/* Cozy Software Branding */}

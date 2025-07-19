@@ -12,6 +12,19 @@ import { ArrowLeft, CreditCard, Banknote, Shield, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+// Email receipt function
+const sendReceipt = async (order: any) => {
+  try {
+    await apiRequest("POST", "/api/send-receipt", {
+      email: "alpdogan.celik1@gmail.com",
+      orderId: order.id,
+      orderData: order
+    });
+  } catch (error) {
+    console.error("Failed to send receipt:", error);
+  }
+};
+
 export default function Checkout() {
   const [, setLocation] = useLocation();
   const [specialInstructions, setSpecialInstructions] = useState("");
@@ -44,18 +57,23 @@ export default function Checkout() {
       const response = await apiRequest("POST", "/api/orders", orderData);
       return response.json();
     },
-    onSuccess: (order) => {
+    onSuccess: async (order) => {
       // Clear cart
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       
-      if (paymentMethod === "cash") {
+      if (paymentMethod === "cash" || paymentMethod === "card_at_door") {
         toast({
           title: "Order Placed Successfully",
-          description: "You've chosen to pay cash on delivery",
+          description: paymentMethod === "cash" 
+            ? "You've chosen to pay cash on delivery"
+            : "You've chosen to pay with card at door",
         });
+        
+        // Send receipt email
+        await sendReceipt(order);
         setLocation("/orders");
       } else {
-        // Handle card payment
+        // Handle online card payment
         handleCardPayment(order);
       }
     },
@@ -123,8 +141,9 @@ export default function Checkout() {
 
     const orderData = {
       addressId: selectedAddress,
-      paymentMethod: paymentMethod === "card" ? "iyzico" : "cash",
-      paymentStatus: paymentMethod === "card" ? "pending" : "cash_on_delivery",
+      paymentMethod: paymentMethod === "card" ? "iyzico" : paymentMethod,
+      paymentStatus: paymentMethod === "card" ? "pending" : 
+        paymentMethod === "cash" ? "cash_on_delivery" : "card_at_door",
       specialInstructions,
       items: cartItems.map((item: any) => ({
         menuItemId: item.menuItemId,
@@ -268,6 +287,31 @@ export default function Checkout() {
                 </Label>
                 {paymentMethod === "cash" && (
                   <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full" />
+                  </div>
+                )}
+              </div>
+
+              {/* Credit Card at Door */}
+              <div className="flex items-center space-x-3 p-3 border border-blue-200 rounded-lg">
+                <RadioGroupItem value="card_at_door" id="card_at_door" />
+                <Label htmlFor="card_at_door" className="flex-1 cursor-pointer">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <CreditCard className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">Credit Card at Door</span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        Pay with card when courier arrives
+                      </p>
+                    </div>
+                  </div>
+                </Label>
+                {paymentMethod === "card_at_door" && (
+                  <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
                     <div className="w-2 h-2 bg-white rounded-full" />
                   </div>
                 )}
