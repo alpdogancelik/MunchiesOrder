@@ -797,20 +797,12 @@ export class DatabaseStorage implements IStorage {
     return updatedOrder;
   }
 
-  // Get all users who are couriers (based on localStorage userType or email pattern)
+  // Get all users who are couriers (based on role field)
   async getCourierUsers(): Promise<User[]> {
-    // For now, we'll identify couriers by their userType in localStorage
-    // In a real app, you'd have a user role field in the database
-    const allUsers = await db.select().from(users);
-    
-    // Filter users who have courier in their username or are known couriers
-    // This is a temporary solution - in production you'd have proper role management
-    return allUsers.filter(user => 
-      user.username.includes('courier') || 
-      user.email?.includes('courier') ||
-      user.firstName?.toLowerCase().includes('courier') ||
-      user.lastName?.toLowerCase().includes('courier')
-    );
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.role, 'courier'));
   }
 }
 

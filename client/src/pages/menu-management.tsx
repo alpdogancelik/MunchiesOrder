@@ -378,6 +378,7 @@ function MenuItemForm({
       onClose();
     },
     onError: (error) => {
+      console.error("Menu item save error:", error);
       if (isUnauthorizedError(error as Error)) {
         toast({
           title: "Unauthorized",
@@ -391,7 +392,7 @@ function MenuItemForm({
       }
       toast({
         title: "Error",
-        description: `Failed to ${item ? 'update' : 'add'} menu item`,
+        description: `Failed to ${item ? 'update' : 'add'} menu item: ${error.message}`,
         variant: "destructive",
       });
     },
@@ -399,6 +400,8 @@ function MenuItemForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log("Form submitted with data:", formData);
     
     if (!formData.name.trim()) {
       toast({
@@ -418,10 +421,14 @@ function MenuItemForm({
       return;
     }
 
-    saveItemMutation.mutate({
+    const submitData = {
       ...formData,
       price: parseFloat(formData.price).toFixed(2),
-    });
+      imageUrl: formData.imageUrl || '', // Ensure imageUrl is never null
+    };
+    
+    console.log("Submitting:", submitData);
+    saveItemMutation.mutate(submitData);
   };
 
   const handleChange = (field: string, value: any) => {
