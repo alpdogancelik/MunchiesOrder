@@ -10,18 +10,30 @@ import { Search, MapPin, Clock, Star, ShoppingCart, User, Package, Filter, X } f
 import { Logo } from "@/components/ui/logo";
 import { LogoutButton } from "@/components/ui/logout-button";
 import { useAuth } from "@/hooks/useAuth";
+import { useNotifications } from "@/hooks/useNotifications";
+import { NotificationPrompt } from "@/components/ui/notification-prompt";
 
 const cuisineFilters = ["All", "Pizza", "Burger", "Turkish", "Italian", "Asian", "Dessert", "Coffee"];
 
 export default function StudentHome() {
   const { user } = useAuth();
+  const { isEnabled: notificationsEnabled } = useNotifications();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCuisine, setSelectedCuisine] = useState("All");
   const [activeTab, setActiveTab] = useState("browse");
+  const [showNotificationPrompt, setShowNotificationPrompt] = useState(true);
 
   // Fetch restaurants with search
   const { data: restaurants = [], isLoading: restaurantsLoading } = useQuery({
-    queryKey: ["/api/restaurants/search", { q: searchQuery, cuisine: selectedCuisine === "All" ? undefined : selectedCuisine }],
+    queryKey: ["/api/restaurants"],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('search', searchQuery);
+      if (selectedCuisine !== "All") params.append('category', selectedCuisine);
+      const response = await fetch(`/api/restaurants?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch restaurants');
+      return response.json();
+    },
     enabled: true,
   });
 
@@ -121,6 +133,13 @@ export default function StudentHome() {
 
           {/* Browse Tab */}
           <TabsContent value="browse" className="px-4 space-y-4">
+            {/* Notification Prompt */}
+            {showNotificationPrompt && (
+              <NotificationPrompt 
+                onDismiss={() => setShowNotificationPrompt(false)}
+                className="mb-4"
+              />
+            )}
             {/* Search Bar */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />

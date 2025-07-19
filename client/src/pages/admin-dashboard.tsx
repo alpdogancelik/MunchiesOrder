@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -7,12 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { useNotifications } from "@/hooks/useNotifications";
+import { NotificationPrompt } from "@/components/ui/notification-prompt";
 import { ORDER_STATUS, ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from "@/lib/constants";
 import { Truck, Store } from "lucide-react";
 
 export default function AdminDashboard() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { isEnabled: notificationsEnabled } = useNotifications();
   const { toast } = useToast();
+  const [showNotificationPrompt, setShowNotificationPrompt] = useState(true);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -122,6 +126,13 @@ export default function AdminDashboard() {
         </div>
       ) : (
         <div className="px-4 py-6">
+          {/* Notification Prompt */}
+          {showNotificationPrompt && (
+            <NotificationPrompt 
+              onDismiss={() => setShowNotificationPrompt(false)}
+              className="mb-4"
+            />
+          )}
           {/* Restaurant Info */}
           <Card className="mb-6">
             <CardContent className="p-4">

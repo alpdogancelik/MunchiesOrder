@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Camera, Upload, X, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -169,6 +169,9 @@ export function ImageUpload({ value, onChange, className = "", accept = "image/*
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Upload Meal Photo</DialogTitle>
+              <DialogDescription>
+                Choose how you'd like to add a photo of your meal
+              </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4">

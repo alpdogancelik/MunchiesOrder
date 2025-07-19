@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useNotifications } from "@/hooks/useNotifications";
+import { NotificationPrompt } from "@/components/ui/notification-prompt";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +13,7 @@ import { apiRequest } from "@/lib/queryClient";
 
 export default function CourierDashboard() {
   const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [showNotificationPrompt, setShowNotificationPrompt] = useState(true);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

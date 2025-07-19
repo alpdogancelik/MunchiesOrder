@@ -129,6 +129,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/restaurants/:id', async (req, res) => {
     try {
       const restaurantId = parseInt(req.params.id);
+      if (isNaN(restaurantId)) {
+        return res.status(400).json({ message: "Invalid restaurant ID" });
+      }
       const restaurant = await storage.getRestaurant(restaurantId);
       if (!restaurant) {
         return res.status(404).json({ message: "Restaurant not found" });
@@ -214,6 +217,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/restaurants/:id/menu', isAuthenticated, async (req: any, res) => {
     try {
       const restaurantId = parseInt(req.params.id);
+      if (isNaN(restaurantId)) {
+        return res.status(400).json({ message: "Invalid restaurant ID" });
+      }
       const menuItemData = insertMenuItemSchema.parse({ ...req.body, restaurantId });
       const menuItem = await storage.createMenuItem(menuItemData);
       res.json(menuItem);
@@ -226,6 +232,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/menu-items/:id', isAuthenticated, async (req: any, res) => {
     try {
       const menuItemId = parseInt(req.params.id);
+      if (isNaN(menuItemId)) {
+        return res.status(400).json({ message: "Invalid menu item ID" });
+      }
       const menuItemData = insertMenuItemSchema.partial().parse(req.body);
       const menuItem = await storage.updateMenuItem(menuItemId, menuItemData);
       res.json(menuItem);
@@ -238,6 +247,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/menu-items/:id', isAuthenticated, async (req: any, res) => {
     try {
       const menuItemId = parseInt(req.params.id);
+      if (isNaN(menuItemId)) {
+        return res.status(400).json({ message: "Invalid menu item ID" });
+      }
       await storage.deleteMenuItem(menuItemId);
       res.json({ success: true });
     } catch (error) {
@@ -346,6 +358,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching restaurant orders:", error);
       res.status(500).json({ message: "Failed to fetch restaurant orders" });
+    }
+  });
+
+  app.get('/api/orders/user/me', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const orders = await storage.getUserOrders(userId);
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching user orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  // Notification routes
+  app.post('/api/notifications/send', isAuthenticated, async (req: any, res) => {
+    try {
+      const { type, targetUserId, payload } = req.body;
+      
+      // In a real implementation, you would:
+      // 1. Get the user's notification token from database
+      // 2. Send via FCM/Expo Push Service
+      // 3. Store notification in database for history
+      
+      console.log(`Sending ${type} notification to user ${targetUserId}:`, payload);
+      
+      res.json({ success: true, message: 'Notification sent' });
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      res.status(500).json({ message: "Failed to send notification" });
+    }
+  });
+
+  app.post('/api/notifications/register-token', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { token, platform } = req.body;
+      
+      // Store user's notification token
+      // await storage.updateUserNotificationToken(userId, token, platform);
+      
+      console.log(`Registered notification token for user ${userId}: ${token}`);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error registering notification token:", error);
+      res.status(500).json({ message: "Failed to register token" });
     }
   });
 
