@@ -194,18 +194,14 @@ export default function AdminDashboard() {
                     <i className="fas fa-utensils mr-2"></i>Manage Menu
                   </Button>
                 </Link>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    toast({
-                      title: "View Orders",
-                      description: "Order management coming soon!",
-                    });
-                  }}
-                  className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 font-medium"
-                >
-                  <i className="fas fa-list mr-2"></i>View Orders
-                </Button>
+                <Link href="/admin/couriers">
+                  <Button
+                    variant="outline"
+                    className="w-full bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 font-medium"
+                  >
+                    <Truck size={16} className="mr-2" />Track Couriers
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>

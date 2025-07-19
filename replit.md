@@ -2,7 +2,7 @@
 
 ## Overview
 
-Munchies is a comprehensive food delivery application designed specifically for Kalkanlı Campus. The application provides a seamless ordering experience with restaurant browsing, menu management, cart functionality, order tracking, and payment processing. The system is built as a full-stack web application with a mobile-first responsive design.
+Munchies is a comprehensive food delivery application designed specifically for Kalkanlı Campus. The application provides a seamless ordering experience with restaurant browsing, menu management, cart functionality, order tracking, and payment processing. The system supports three user types (Students, Restaurant Owners, and Couriers) with role-based access control, custom authentication, live courier tracking, and a modern mobile-first design with the new 3D food logo.
 
 ## User Preferences
 
@@ -39,6 +39,8 @@ Preferred communication style: Simple, everyday language.
 - **Session Storage**: PostgreSQL-based session store with 7-day TTL
 - **Authorization**: Route-level protection with middleware
 - **User Management**: Registration and login with secure password hashing
+- **User Types**: Three role-based user types (Student, Restaurant Owner, Courier)
+- **Logout Functionality**: Complete logout with user type switching capability
 - **Security Features**: Comprehensive audit logging for all auth events
 
 ### Database Schema
@@ -61,7 +63,9 @@ Preferred communication style: Simple, everyday language.
 - **Status Tracking**: Multi-stage order progression (pending → confirmed → preparing → ready → out for delivery → delivered)
 - **Real-time Updates**: Query invalidation for live status updates
 - **Admin Dashboard**: Restaurant owner interface for order management
-- **Delivery Coordination**: Integration with delivery status updates
+- **Courier Tracking**: Live GPS-based courier tracking for restaurant owners
+- **Courier Dashboard**: Dedicated interface for delivery management
+- **Delivery Coordination**: Integration with delivery status updates and location tracking
 
 ## Data Flow
 
@@ -79,7 +83,14 @@ Preferred communication style: Simple, everyday language.
 1. **Restaurant Management**: Create and configure restaurant profiles
 2. **Menu Administration**: Manage categories and menu items
 3. **Order Processing**: Accept, prepare, and track order fulfillment
-4. **Analytics**: View order history and performance metrics
+4. **Courier Management**: Live tracking of delivery personnel with GPS locations
+5. **Analytics**: View order history and performance metrics
+
+### Courier Workflow
+1. **Delivery Assignments**: Receive and accept delivery orders
+2. **Status Updates**: Update order status through pickup and delivery stages
+3. **Live Tracking**: Real-time location sharing with restaurant owners
+4. **Earnings Tracking**: View daily delivery summary and earnings
 
 ### API Architecture
 - **RESTful Design**: Standard HTTP methods with JSON payloads

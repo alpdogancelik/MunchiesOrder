@@ -16,6 +16,8 @@ import Profile from "@/pages/profile";
 import AddressManagement from "@/pages/address-management";
 import AdminDashboard from "@/pages/admin-dashboard";
 import MenuManagement from "@/pages/menu-management";
+import CourierTracking from "@/pages/courier-tracking";
+import CourierManagement from "@/pages/courier-management";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -27,16 +29,24 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
+      <Route path="/landing" component={Landing} />
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
         <>
           {/* Route based on user type */}
-          {userType === 'restaurant' ? (
+          {userType === 'courier' ? (
+            <>
+              <Route path="/" component={CourierTracking} />
+              <Route path="/courier" component={CourierTracking} />
+              <Route path="/profile" component={Profile} />
+            </>
+          ) : userType === 'restaurant' ? (
             <>
               <Route path="/" component={AdminDashboard} />
               <Route path="/admin" component={AdminDashboard} />
               <Route path="/admin/menu/:restaurantId" component={MenuManagement} />
+              <Route path="/admin/couriers" component={CourierManagement} />
               <Route path="/profile" component={Profile} />
             </>
           ) : (

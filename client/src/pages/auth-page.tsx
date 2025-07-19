@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { Logo } from "@/components/ui/logo";
 
 export default function AuthPage() {
   const [, setLocation] = useLocation();
@@ -174,9 +175,12 @@ export default function AuthPage() {
           <div className="w-full max-w-md">
             {/* Logo */}
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent mb-2">
-                🍔 Munchies
-              </h1>
+              <div className="flex flex-col items-center mb-4">
+                <Logo size="lg" className="mb-2" />
+                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+                  Munchies
+                </h1>
+              </div>
               <p className="text-gray-600 dark:text-gray-400">
                 {isLogin ? "Welcome back!" : "Join the feast!"}
               </p>

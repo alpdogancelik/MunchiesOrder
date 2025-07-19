@@ -1,0 +1,76 @@
+Build a React Native (Expo) mobile app with full role-based access control for a food ordering platform. The app should have three main user panels: 
+
+1. **Customer Panel**
+2. **Restaurant Owner Panel**
+3. **Courier Panel**
+
+Also include two admin levels:
+* **Admin** (can manage restaurants, users, reports)
+* **Ultra Super Admin** (me) — full system access and override
+
+---
+
+### 💼 Restaurant Owner Panel Features:
+* View a list of all incoming orders with customer name, items, address, and payment status.
+* Change order status through 3 states:
+  - "Preparing"
+  - "On the way"
+  - "Delivered"
+* Add new food items (meals, categories, drinks).
+* Set and update prices.
+* Apply discounts (percentage or fixed amount).
+* View and reply to customer reviews.
+* Receive real-time notifications for:
+  - New orders
+  - Review submissions
+  - Order delivery confirmations
+
+---
+
+### 🛒 Customer Panel Features:
+* Register and login
+* Browse restaurants and menus
+* Add food and drinks to cart
+* Choose delivery address
+* Checkout via iyzico payment
+* Track order status in real-time
+* Leave reviews and ratings
+* Get push notifications when:
+  - Order status is updated
+  - Discounts are available
+
+---
+
+### 🚴 Courier Panel Features:
+* View assigned delivery orders
+* See pickup and delivery address
+* Update delivery status: "Picked Up", "Delivered"
+* View daily delivery summary
+* Receive notifications when assigned a new delivery
+
+---
+
+### ⚙️ Admin Permissions:
+* Manage user accounts (approve, block)
+* Approve or remove restaurants
+* Monitor order history and disputes
+* View all customer reviews
+
+---
+
+### 🛡️ Ultra Super Admin:
+* Full access to all user types, all databases, and analytics
+* Ability to reset system values
+* Modify or delete anything (including Admins)
+* Override restaurant availability or promotions
+
+---
+
+### 🔧 Tech Stack Details:
+* Use Firebase Authentication for role-based login
+* Use Firestore or MongoDB for backend data (orders, users, reviews, items)
+* Push notifications via Expo Notifications or Firebase Cloud Messaging
+* Navigation using React Navigation
+* Use contexts or Redux for role-based screen routing
+
+Make sure to structure code clearly with separate folders for each user panel and role. Add comments for role guards and permission logic. Include basic UI for switching between login types (Customer, Restaurant, Courier, Admin).

@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { ChefHat, UtensilsCrossed, Truck, Star, Users, Store } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { Logo } from "@/components/ui/logo";
 
 export default function Landing() {
-  const [userType, setUserType] = useState<'student' | 'restaurant' | null>(null);
+  const [userType, setUserType] = useState<'student' | 'restaurant' | 'courier' | null>(null);
   const [, setLocation] = useLocation();
 
-  const handleLogin = (type: 'student' | 'restaurant') => {
+  const handleLogin = (type: 'student' | 'restaurant' | 'courier') => {
     // Store user type in localStorage for post-login routing
     localStorage.setItem('userType', type);
     setLocation('/auth');
@@ -27,13 +28,12 @@ export default function Landing() {
         </div>
         
         <div className="flex flex-col items-center justify-center min-h-screen px-6 py-8 relative z-10">
-          {/* Hunger-inducing Logo */}
-          <div className="text-center mb-16 animate-pulse">
+          {/* Logo */}
+          <div className="text-center mb-16">
             <div className="relative mb-8">
-              <div className="w-32 h-32 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto shadow-2xl ring-8 ring-white/30 backdrop-blur-lg">
-                <UtensilsCrossed className="text-white text-5xl drop-shadow-lg" />
+              <div className="flex justify-center mb-6">
+                <Logo size="xl" className="drop-shadow-2xl" />
               </div>
-              <div className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 rounded-full animate-ping"></div>
             </div>
             <h1 className="text-6xl font-black text-white mb-4 drop-shadow-2xl tracking-wider" 
                 style={{ fontFamily: '"Fredoka One", "Comic Sans MS", cursive' }}>
@@ -95,6 +95,29 @@ export default function Landing() {
                     className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg transform hover:scale-105"
                   >
                     🍳 Enter as Owner
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Courier Panel */}
+            <Card className="transform hover:scale-105 transition-all duration-300 shadow-2xl border-0 bg-white/95 backdrop-blur-lg">
+              <CardContent className="pt-6 pb-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <Truck className="text-white text-2xl" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-3" style={{ fontFamily: '"Nunito", sans-serif' }}>
+                    I'm a Courier
+                  </h3>
+                  <p className="text-gray-600 mb-6 leading-relaxed">
+                    Deliver orders, earn money, and track your daily deliveries on campus!
+                  </p>
+                  <Button 
+                    onClick={() => handleLogin('courier')}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-purple-600 hover:to-pink-700 transition-all duration-300 shadow-lg transform hover:scale-105"
+                  >
+                    🚴 Start Delivering
                   </Button>
                 </div>
               </CardContent>

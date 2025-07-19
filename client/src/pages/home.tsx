@@ -7,6 +7,8 @@ import RestaurantCard from "@/components/restaurant-card";
 import BottomNavigation from "@/components/ui/bottom-navigation";
 import { Link } from "wouter";
 import { useState } from "react";
+import { LogoutButton } from "@/components/ui/logout-button";
+import { Logo } from "@/components/ui/logo";
 
 const cuisineFilters = ["All", "Pizza", "Burger", "Turkish", "Dessert", "Coffee"];
 
@@ -38,6 +40,7 @@ export default function Home() {
       <div className="bg-white dark:bg-dark-200 px-4 py-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
+            <Logo size="sm" />
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
               {user?.profileImageUrl ? (
                 <img src={user.profileImageUrl} alt="Profile" className="w-full h-full rounded-full object-cover" />
@@ -52,7 +55,7 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
             <Button
               variant="ghost"
               size="sm"
@@ -68,6 +71,7 @@ export default function Home() {
                 <i className="fas fa-cog text-gray-600 dark:text-gray-400"></i>
               </Button>
             </Link>
+            <LogoutButton variant="ghost" />
           </div>
         </div>
         
