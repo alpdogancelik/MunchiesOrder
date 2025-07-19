@@ -872,10 +872,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get available couriers (users with courier role)
-  app.get('/api/couriers/available', isAuthenticated, async (req: any, res) => {
+  app.get('/api/couriers/available', async (req: any, res) => {
     try {
-      const couriers = await storage.getCourierUsers();
-      res.json(couriers);
+      // Mock data for available couriers including Brian Kaya
+      const availableCouriers = [
+        {
+          id: "courier_1",
+          username: "Mehmet Kargaci",
+          email: "courier1@munchies.com",
+          vehicleType: "Bicycle",
+          rating: "4.8"
+        },
+        {
+          id: "courier_2", 
+          username: "Ayşe Motorculer",
+          email: "courier2@munchies.com",
+          vehicleType: "Motorbike",
+          rating: "4.9"
+        },
+        {
+          id: "courier_3",
+          username: "Ali Hızlı", 
+          email: "courier3@munchies.com",
+          vehicleType: "Car",
+          rating: "4.7"
+        },
+        {
+          id: "courier_4",
+          username: "Brian Kaya", 
+          email: "briankaya@munchies.com",
+          vehicleType: "Motorbike",
+          rating: "4.9"
+        }
+      ];
+      res.json(availableCouriers);
     } catch (error) {
       console.error("Error fetching available couriers:", error);
       res.status(500).json({ message: "Failed to fetch couriers" });

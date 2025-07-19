@@ -164,8 +164,16 @@ export default function CourierDashboard() {
   });
 
   // Show profile creation if no courier profile exists
-  if (!hasProfile && profileError && String(profileError).includes('not found')) {
+  if (profileError && String(profileError).includes('not found')) {
     return <CourierProfileSetup />;
+  }
+  
+  if (!courierProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-dark-300 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
   }
 
   // Update courier location

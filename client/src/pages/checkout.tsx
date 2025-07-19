@@ -268,7 +268,7 @@ export default function Checkout() {
               </div>
 
               {/* Cash Payment */}
-              <div className="flex items-center space-x-3 p-3 border border-green-200 rounded-lg">
+              <div className="flex items-center space-x-3 p-3 border border-green-200 rounded-lg bg-green-50">
                 <RadioGroupItem value="cash" id="cash" />
                 <Label htmlFor="cash" className="flex-1 cursor-pointer">
                   <div className="flex items-center space-x-3">
@@ -277,10 +277,11 @@ export default function Checkout() {
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="font-medium">Cash on Delivery</span>
+                        <span className="font-medium text-green-800">Cash on Delivery</span>
+                        <span className="text-xs bg-green-200 text-green-700 px-2 py-1 rounded-full">Available</span>
                       </div>
-                      <p className="text-sm text-gray-600">
-                        Pay when your order arrives
+                      <p className="text-sm text-green-700">
+                        Pay cash when your order arrives at your door
                       </p>
                     </div>
                   </div>
@@ -293,7 +294,7 @@ export default function Checkout() {
               </div>
 
               {/* Credit Card at Door */}
-              <div className="flex items-center space-x-3 p-3 border border-blue-200 rounded-lg">
+              <div className="flex items-center space-x-3 p-3 border border-blue-200 rounded-lg bg-blue-50">
                 <RadioGroupItem value="card_at_door" id="card_at_door" />
                 <Label htmlFor="card_at_door" className="flex-1 cursor-pointer">
                   <div className="flex items-center space-x-3">
@@ -302,10 +303,11 @@ export default function Checkout() {
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="font-medium">Credit Card at Door</span>
+                        <span className="font-medium text-blue-800">Credit Card at Door</span>
+                        <span className="text-xs bg-blue-200 text-blue-700 px-2 py-1 rounded-full">Available</span>
                       </div>
-                      <p className="text-sm text-gray-600">
-                        Pay with card when courier arrives
+                      <p className="text-sm text-blue-700">
+                        Pay with credit card when courier arrives
                       </p>
                     </div>
                   </div>
