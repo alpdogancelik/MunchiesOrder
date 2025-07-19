@@ -125,6 +125,39 @@ export default function MenuManagement() {
     },
   });
 
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (categoryId: number) => {
+      await apiRequest("DELETE", `/api/categories/${categoryId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/restaurants", id, "categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/restaurants", id, "menu"] });
+      setSelectedCategory(null);
+      toast({
+        title: "Category deleted",
+        description: "Menu category has been removed successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete category. Make sure it has no menu items.",
+        variant: "destructive",
+      });
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-dark-300">
@@ -179,6 +212,22 @@ export default function MenuManagement() {
     });
   };
 
+  const handleDeleteCategory = (category: any) => {
+    const categoryItems = menuItems.filter((item: any) => item.categoryId === category.id);
+    if (categoryItems.length > 0) {
+      toast({
+        title: "Cannot delete category",
+        description: `This category has ${categoryItems.length} items. Please delete or move them first.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (window.confirm(`Are you sure you want to delete "${category.name}" category?`)) {
+      deleteCategoryMutation.mutate(category.id);
+    }
+  };
+
   if (showItemForm) {
     return <MenuItemForm item={editingItem} restaurantId={id} onClose={() => setShowItemForm(false)} />;
   }
@@ -225,15 +274,28 @@ export default function MenuManagement() {
                 {categories.map((category: any) => {
                   const categoryCount = menuItems.filter((item: any) => item.categoryId === category.id).length;
                   return (
-                    <Button
-                      key={category.id}
-                      variant={selectedCategory === category.id ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedCategory(category.id)}
-                      className="flex-shrink-0 rounded-full"
-                    >
-                      {category.name} ({categoryCount})
-                    </Button>
+                    <div key={category.id} className="flex items-center space-x-1 flex-shrink-0">
+                      <Button
+                        variant={selectedCategory === category.id ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedCategory(category.id)}
+                        className="rounded-full"
+                      >
+                        {category.name} ({categoryCount})
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCategory(category);
+                        }}
+                        className="w-8 h-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        title="Delete category"
+                      >
+                        ×
+                      </Button>
+                    </div>
                   );
                 })}
               </div>

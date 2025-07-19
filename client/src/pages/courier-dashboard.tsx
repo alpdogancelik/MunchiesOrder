@@ -199,7 +199,7 @@ export default function CourierDashboard() {
 
   // Get user location
   useEffect(() => {
-    if (navigator.geolocation) {
+    if (navigator.geolocation && courierProfile) {
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
@@ -220,7 +220,7 @@ export default function CourierDashboard() {
 
       return () => navigator.geolocation.clearWatch(watchId);
     }
-  }, []);
+  }, [courierProfile]);
 
   const handleStatusUpdate = (orderId: number, status: string) => {
     updateOrderStatusMutation.mutate({ orderId, status });

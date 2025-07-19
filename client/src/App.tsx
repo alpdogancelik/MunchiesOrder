@@ -22,6 +22,8 @@ import CourierTracking from "@/pages/courier-tracking";
 import CourierManagement from "@/pages/courier-management";
 import CourierDashboard from "@/pages/courier-dashboard";
 import CreateRestaurant from "@/pages/create-restaurant";
+import Checkout from "@/pages/checkout";
+import DeveloperDashboard from "@/pages/developer-dashboard";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -55,12 +57,15 @@ function Router() {
               <Route path="/admin/couriers" component={CourierManagement} />
               <Route path="/admin/create-restaurant" component={CreateRestaurant} />
               <Route path="/profile" component={Profile} />
+              {/* Developer Dashboard for super admins */}
+              <Route path="/developer" component={DeveloperDashboard} />
             </>
           ) : (
             <>
               <Route path="/" component={StudentHome} />
               <Route path="/restaurant/:id" component={Restaurant} />
               <Route path="/cart" component={Cart} />
+              <Route path="/checkout" component={Checkout} />
               <Route path="/payment" component={Payment} />
               <Route path="/order/:id" component={OrderTracking} />
               <Route path="/profile" component={Profile} />

@@ -260,6 +260,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/categories/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+      if (isNaN(categoryId)) {
+        return res.status(400).json({ message: "Invalid category ID" });
+      }
+      await storage.deleteMenuCategory(categoryId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      res.status(400).json({ message: "Failed to delete category" });
+    }
+  });
+
   // Cart routes
   app.get('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
@@ -315,6 +329,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error clearing cart:", error);
       res.status(400).json({ message: "Failed to clear cart" });
+    }
+  });
+
+  // Payment and cash tracking routes
+  app.post('/api/orders/:id/cash-payment', isAuthenticated, async (req: any, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      const { amountReceived, courierNotes } = req.body;
+      
+      const order = await storage.updateOrder(orderId, {
+        paymentStatus: 'paid',
+        cashReceived: amountReceived,
+        courierNotes: courierNotes || null,
+        status: 'delivered'
+      });
+      
+      res.json(order);
+    } catch (error) {
+      console.error("Error recording cash payment:", error);
+      res.status(400).json({ message: "Failed to record cash payment" });
+    }
+  });
+
+  // Developer dashboard routes
+  app.get('/api/admin/system-stats', isAuthenticated, async (req: any, res) => {
+    try {
+      // Only allow super admins (Arda and Alp)
+      const user = req.user;
+      if (!['arda', 'alp'].includes(user.username.toLowerCase())) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const stats = {
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        environment: process.env.NODE_ENV || 'development',
+        nodeVersion: process.version
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching system stats:", error);
+      res.status(500).json({ message: "Failed to fetch system stats" });
+    }
+  });
+
+  app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!['arda', 'alp'].includes(user.username.toLowerCase())) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const users = await storage.getAllUsers();
+      const stats = {
+        total: users.length,
+        students: users.filter(u => u.role === 'student').length,
+        restaurant_owners: users.filter(u => u.role === 'restaurant_owner').length,
+        couriers: users.filter(u => u.role === 'courier').length,
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      res.status(500).json({ message: "Failed to fetch user stats" });
+    }
+  });
+
+  app.get('/api/admin/restaurants', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!['arda', 'alp'].includes(user.username.toLowerCase())) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const restaurants = await storage.getAllRestaurants();
+      const stats = {
+        total: restaurants.length,
+        active: restaurants.filter(r => r.isOpen).length,
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching restaurant stats:", error);
+      res.status(500).json({ message: "Failed to fetch restaurant stats" });
+    }
+  });
+
+  app.get('/api/admin/orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!['arda', 'alp'].includes(user.username.toLowerCase())) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const orders = await storage.getAllOrders();
+      const today = new Date().toDateString();
+      const todayOrders = orders.filter(o => new Date(o.createdAt!).toDateString() === today);
+      
+      const stats = {
+        total: orders.length,
+        today: todayOrders.length,
+        revenue: orders.filter(o => o.paymentStatus === 'paid').reduce((sum, o) => sum + o.total, 0),
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching order stats:", error);
+      res.status(500).json({ message: "Failed to fetch order stats" });
     }
   });
 

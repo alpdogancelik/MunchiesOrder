@@ -118,7 +118,7 @@ export interface IStorage {
   // Courier restaurant assignment operations (new system)
   createCourierRestaurantAssignment(assignment: InsertCourierRestaurantAssignment): Promise<CourierRestaurantAssignment>;
   getCourierRestaurantAssignments(courierId: number): Promise<(CourierRestaurantAssignment & { restaurant: Restaurant })[]>;
-  getRestaurantCourierAssignments(restaurantId: number): Promise<(CourierRestaurantAssignment & { courier: Courier; courierUser: User })[]>;
+  getRestaurantCourierAssignments(restaurantId: number): Promise<any[]>;
   
   // Courier location operations
   updateCourierLocation(courierId: string, latitude: number, longitude: number): Promise<CourierLocation>;
