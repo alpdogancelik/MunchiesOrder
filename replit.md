@@ -20,11 +20,14 @@ Preferred communication style: Simple, everyday language.
 ✓ Enhanced courier dashboard with proper Google Maps integration
 ✓ Fixed menu item form to use enhanced ImageUpload component properly
 ✓ Prepared project for GitHub deployment with comprehensive documentation
+✓ Fixed broken landing page by creating simplified version without dependencies
+✓ Resolved logout 404 error - now properly redirects to landing page
 
 → Profile system enhanced with secure picture upload
 → Email notifications working for order confirmations  
 → Google Maps navigation integrated for courier deliveries
 → Project ready for GitHub deployment at https://github.com/alpdogancelik
+→ Landing page restored and logout functionality working correctly
 
 ## System Architecture
 
