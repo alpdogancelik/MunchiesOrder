@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Utensils, Clock, Shield, Star } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { useLanguage } from "@/hooks/useLanguage";
-import { LanguageSelector } from "@/components/ui/language-selector";
+import { LanguageSelector } from "@/components/language-selector";
 
 export default function Landing() {
   const [userType, setUserType] = useState<'user' | 'restaurant' | 'courier'>('user');
@@ -53,7 +53,11 @@ export default function Landing() {
                 variant="ghost"
                 size="sm"
               />
-
+              <Link href="/auth">
+                <Button variant="ghost" size="sm" className="text-gray-600 dark:text-gray-300">
+                  {t('login')}
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -68,7 +72,7 @@ export default function Landing() {
             <span className="block text-orange-500 text-3xl">Crave & Receive</span>
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-sm mx-auto leading-relaxed">
-            ODTÜ KKK ve Kalkanlı için yemek siparişi
+            {t('tagline')}
           </p>
           
           {/* User Type Selection */}
@@ -105,28 +109,11 @@ export default function Landing() {
           <Button 
             onClick={handleGetStarted}
             size="lg" 
-            className="w-full h-12 text-base font-medium mb-6 bg-orange-500 hover:bg-orange-600 text-white"
+            className="w-full h-12 text-base font-medium"
           >
             Get Started
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
-          
-          {/* Market Preview Section */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
-            <div className="text-center">
-              <div className="text-2xl mb-2">🛒</div>
-              <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-1">
-                Munchies Market
-              </h3>
-              <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
-                Campus groceries & essentials delivery
-              </p>
-              <div className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-xs">
-                <Clock className="w-3 h-3" />
-                Coming Soon
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Features */}

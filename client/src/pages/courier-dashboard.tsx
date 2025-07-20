@@ -1,348 +1,499 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { useNotifications } from "@/hooks/useNotifications";
+import { NotificationPrompt } from "@/components/ui/notification-prompt";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, Package, CheckCircle, Truck, Navigation, Phone, Star, User, Settings } from "lucide-react";
+import { MapPin, Clock, Package, CheckCircle, Truck, Navigation, Phone, Star } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
+import { LogoutButton } from "@/components/ui/logout-button";
 import { useToast } from "@/hooks/use-toast";
-import { UserTypeSwitcher } from "@/components/ui/user-type-switcher";
-import { Chatbot } from "@/components/ui/chatbot";
-import { BackButton } from "@/components/ui/back-button";
-import { GoogleMapsNavigation } from "@/components/ui/google-maps";
+import { apiRequest } from "@/lib/queryClient";
 
-export default function CourierDashboard() {
+// Courier Profile Setup Component
+function CourierProfileSetup() {
   const { toast } = useToast();
-  const [courierProfile, setCourierProfile] = useState(null);
-  const [isOnline, setIsOnline] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState({ lat: 0, lng: 0 });
-  const [activeOrders, setActiveOrders] = useState([]);
-  const [completedToday, setCompletedToday] = useState(0);
-  const [earnings, setEarnings] = useState(0);
+  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    // Initialize courier data
-    const initializeCourier = async () => {
-      try {
-        // Get basic courier info
-        const profile = {
-          id: 'courier_001',
-          name: 'Courier User',
-          vehicleType: 'motorcycle',
-          rating: 4.8,
-          completedDeliveries: 127,
-          phone: '+90 555 123 4567'
-        };
-        
-        setCourierProfile(profile);
-        setCompletedToday(5);
-        setEarnings(145.50);
-        
-        // Get current location
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              setCurrentLocation({
-                lat: position.coords.latitude,
-                lng: position.coords.longitude
-              });
-            },
-            (error) => {
-              console.log('Location access denied');
-            }
-          );
-        }
-        
-        // Mock active orders
-        setActiveOrders([
-          {
-            id: 1,
-            restaurant: 'Campus Burger',
-            customerName: 'Ahmet Yılmaz',
-            customerPhone: '+90 555 987 6543',
-            address: 'Kalkanlı Campus, Building A, Room 205',
-            status: 'ready_for_pickup',
-            distance: '0.8 km',
-            estimatedTime: '15 min'
-          },
-          {
-            id: 2,
-            restaurant: 'Pizza Corner',
-            customerName: 'Elif Demir',
-            customerPhone: '+90 555 456 7890',
-            address: 'Student Dormitory, Block C, Room 312',
-            status: 'out_for_delivery',
-            distance: '1.2 km',
-            estimatedTime: '8 min'
-          }
-        ]);
-        
-      } catch (error) {
-        console.error('Error initializing courier dashboard:', error);
-      }
+  const createProfileMutation = useMutation({
+    mutationFn: async (profileData: any) => {
+      return await apiRequest('/api/courier/profile', {
+        method: 'POST',
+        body: JSON.stringify(profileData),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/courier/profile'] });
+      toast({
+        title: "Profile created successfully",
+        description: "You can now start receiving delivery orders",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Error creating profile",
+        description: error.message || "Failed to create courier profile",
+      });
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const formData = new FormData(e.currentTarget);
+    const profileData = {
+      vehicleType: formData.get('vehicleType') as string,
+      licensePlate: formData.get('licensePlate') as string,
+      phoneNumber: formData.get('phoneNumber') as string,
+      deliveryRadius: parseInt(formData.get('deliveryRadius') as string) || 5,
+      isAvailable: true,
+      isOnline: false,
     };
 
-    initializeCourier();
-  }, []);
-
-  const toggleOnlineStatus = () => {
-    setIsOnline(!isOnline);
-    toast({
-      title: isOnline ? "You're now offline" : "You're now online",
-      description: isOnline ? "You won't receive new orders" : "You can now receive delivery orders",
-    });
-  };
-
-  const handleOrderUpdate = (orderId, newStatus) => {
-    setActiveOrders(orders => 
-      orders.map(order => 
-        order.id === orderId ? { ...order, status: newStatus } : order
-      )
-    );
-    
-    if (newStatus === 'delivered') {
-      setCompletedToday(prev => prev + 1);
-      setEarnings(prev => prev + 25.00);
-      setActiveOrders(orders => orders.filter(order => order.id !== orderId));
-      
-      toast({
-        title: "Order Delivered!",
-        description: "Great job! Order has been marked as delivered.",
-      });
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'ready_for_pickup': return 'bg-yellow-500';
-      case 'out_for_delivery': return 'bg-blue-500';
-      case 'delivered': return 'bg-green-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'ready_for_pickup': return 'Ready for Pickup';
-      case 'out_for_delivery': return 'Out for Delivery';
-      case 'delivered': return 'Delivered';
-      default: return 'Unknown';
+    try {
+      await createProfileMutation.mutateAsync(profileData);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-300">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Complete Your Courier Profile</h1>
+          <p className="text-gray-600 mt-2">Fill in your details to start delivering orders</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Vehicle Type *
+            </label>
+            <select name="vehicleType" required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+              <option value="">Select vehicle type</option>
+              <option value="bicycle">Bicycle</option>
+              <option value="motorcycle">Motorcycle</option>
+              <option value="car">Car</option>
+              <option value="scooter">Scooter</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              License Plate
+            </label>
+            <input
+              type="text"
+              name="licensePlate"
+              placeholder="e.g., KB 123 AB"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Phone Number *
+            </label>
+            <input
+              type="tel"
+              name="phoneNumber"
+              required
+              placeholder="+90 555 123 4567"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Delivery Radius (km) *
+            </label>
+            <input
+              type="number"
+              name="deliveryRadius"
+              required
+              min="1"
+              max="20"
+              defaultValue="5"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="w-full"
+          >
+            {isSubmitting ? "Creating Profile..." : "Create Courier Profile"}
+          </Button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default function CourierDashboard() {
+  const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [showNotificationPrompt, setShowNotificationPrompt] = useState(true);
+  const [courierProfile, setCourierProfile] = useState(null);
+  const [assignments, setAssignments] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState(false);
+  const { toast } = useToast();
+
+  // Fetch courier data without problematic React Query
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Try to get courier profile
+        const profileResponse = await fetch('/api/courier/profile', {
+          credentials: 'include'
+        });
+        
+        if (profileResponse.status === 404) {
+          setProfileError(true);
+          setLoading(false);
+          return;
+        }
+        
+        if (profileResponse.ok) {
+          const profile = await profileResponse.json();
+          setCourierProfile(profile);
+          
+          // Get assignments and orders if profile exists
+          const [assignmentsRes, ordersRes] = await Promise.all([
+            fetch('/api/courier/assignments', { credentials: 'include' }),
+            fetch('/api/courier/orders', { credentials: 'include' })
+          ]);
+          
+          if (assignmentsRes.ok) {
+            const assignmentsData = await assignmentsRes.json();
+            setAssignments(assignmentsData);
+          }
+          
+          if (ordersRes.ok) {
+            const ordersData = await ordersRes.json();
+            setOrders(ordersData);
+          }
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.log('Courier data fetch error:', error);
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+  const hasProfile = courierProfile && !profileError;
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-dark-300 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  // Show profile creation if no courier profile exists
+  if (profileError) {
+    return <CourierProfileSetup />;
+  }
+
+  // Update courier location
+  const updateLocation = async (latitude: number, longitude: number) => {
+    try {
+      await fetch("/api/courier/location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ latitude, longitude })
+      });
+      console.log("Location updated successfully");
+    } catch (error) {
+      console.log("Location update failed:", error);
+    }
+  };
+
+  // Update order status
+  const updateOrderStatus = async (orderId: number, status: string) => {
+    try {
+      await fetch(`/api/orders/${orderId}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status })
+      });
+      
+      // Refresh orders
+      const ordersRes = await fetch('/api/courier/orders', { credentials: 'include' });
+      if (ordersRes.ok) {
+        const ordersData = await ordersRes.json();
+        setOrders(ordersData);
+      }
+      
+      toast({
+        title: "Order Updated",
+        description: "Order status updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update order status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Get user location
+  useEffect(() => {
+    if (navigator.geolocation && hasProfile) {
+      const watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setCurrentLocation({ latitude, longitude });
+          
+          // Update location on server every minute
+          updateLocation(latitude, longitude);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000, // 1 minute
+        }
+      );
+
+      return () => navigator.geolocation.clearWatch(watchId);
+    }
+  }, [courierProfile]);
+
+  const handleStatusUpdate = (orderId: number, status: string) => {
+    updateOrderStatus(orderId, status);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'confirmed': return 'bg-blue-500';
+      case 'preparing': return 'bg-yellow-500';
+      case 'ready': return 'bg-green-500';
+      case 'out_for_delivery': return 'bg-purple-500';
+      case 'delivered': return 'bg-gray-500';
+      default: return 'bg-gray-400';
+    }
+  };
+
+  const getNextStatus = (currentStatus: string) => {
+    switch (currentStatus) {
+      case 'ready': return 'out_for_delivery';
+      case 'out_for_delivery': return 'delivered';
+      default: return null;
+    }
+  };
+
+  const getNextStatusLabel = (currentStatus: string) => {
+    switch (currentStatus) {
+      case 'ready': return 'Pick Up Order';
+      case 'out_for_delivery': return 'Mark Delivered';
+      default: return null;
+    }
+  };
+
+  const activeOrders = orders.filter((order: any) => 
+    ['ready', 'out_for_delivery'].includes(order.status)
+  );
+
+  const completedToday = orders.filter((order: any) => 
+    order.status === 'delivered' && 
+    new Date(order.updatedAt).toDateString() === new Date().toDateString()
+  ).length;
+
+  const totalEarnings = orders
+    .filter((order: any) => 
+      order.status === 'delivered' && 
+      new Date(order.updatedAt).toDateString() === new Date().toDateString()
+    )
+    .reduce((sum: number, order: any) => sum + 5, 0); // 5 TL per delivery
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-200">
       {/* Header */}
-      <div className="bg-white dark:bg-dark-100 shadow-sm">
-        <div className="px-6 py-4">
+      <div className="bg-white dark:bg-dark-100 border-b border-gray-100 dark:border-dark-100 sticky top-0 z-10">
+        <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/landing" className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center hover:bg-orange-600 transition-colors">
-                <Truck className="w-6 h-6 text-white" />
-              </Link>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">🍽️ Munchies Courier</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                  {courierProfile?.name || 'Courier Dashboard'}
+            <div className="flex items-center space-x-3">
+              <Logo size="sm" />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Courier Dashboard</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {currentLocation ? '📍 Location tracked' : '📍 Getting location...'}
                 </p>
               </div>
             </div>
-            
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={toggleOnlineStatus}
-                className={`${isOnline ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-500 hover:bg-gray-600'} text-white`}
-              >
-                {isOnline ? 'Online' : 'Offline'}
-              </Button>
-              
-              <div className="flex gap-2">
-                <Link href="/landing">
-                  <Button variant="outline" size="sm">
-                    🏠 Home
-                  </Button>
-                </Link>
-                <Link href="/profile">
-                  <Button variant="ghost" size="sm">
-                    <User className="w-4 h-4" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
+            <LogoutButton variant="ghost" size="sm" />
           </div>
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="max-w-md mx-auto p-4 space-y-6">
+        {/* Daily Summary */}
+        <div className="grid grid-cols-2 gap-4">
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Package className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Today's Deliveries</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{completedToday}</p>
-                </div>
-              </div>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">{completedToday}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Deliveries Today</div>
             </CardContent>
           </Card>
-
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Today's Earnings</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">₺{earnings.toFixed(2)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <Star className="w-5 h-5 text-yellow-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Rating</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{courierProfile?.rating || '4.8'}</p>
-                </div>
-              </div>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{totalEarnings} ₺</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Today's Earnings</div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Active Orders */}
+        {/* Restaurant Assignments */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Active Orders ({activeOrders.length})
+            <CardTitle className="text-lg text-gray-900 dark:text-white flex items-center">
+              <Truck className="w-5 h-5 mr-2" />
+              Assigned Restaurants ({assignments.length})
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {activeOrders.length === 0 ? (
-              <div className="text-center py-8">
-                <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400">
-                  {isOnline ? 'No active orders. New orders will appear here.' : 'Go online to receive orders.'}
-                </p>
-              </div>
+          <CardContent className="space-y-3">
+            {assignments.length === 0 ? (
+              <p className="text-gray-600 dark:text-gray-400 text-center py-4">
+                No restaurant assignments yet. Contact your manager.
+              </p>
             ) : (
-              <div className="space-y-4">
-                {activeOrders.map((order) => (
-                  <div key={order.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white truncate max-w-[200px]">{order.restaurant}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Order #{order.id}</p>
-                      </div>
-                      <Badge className={`${getStatusColor(order.status)} text-white`}>
-                        {getStatusText(order.status)}
-                      </Badge>
-                    </div>
-                    
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center gap-2 text-sm">
-                        <User className="w-4 h-4 text-gray-500" />
-                        <span className="truncate max-w-[150px]">{order.customerName}</span>
-                        <Phone className="w-4 h-4 text-gray-500 ml-4" />
-                        <span>{order.customerPhone}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <MapPin className="w-4 h-4 text-gray-500" />
-                        <span className="truncate max-w-[250px]">{order.address}</span>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <span>📍 {order.distance}</span>
-                        <span>⏱️ {order.estimatedTime}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {order.status === 'ready_for_pickup' && (
-                        <Button 
-                          size="sm" 
-                          onClick={() => handleOrderUpdate(order.id, 'out_for_delivery')}
-                          className="bg-blue-500 hover:bg-blue-600 text-white"
-                        >
-                          <Truck className="w-4 h-4 mr-2" />
-                          Start Delivery
-                        </Button>
-                      )}
-                      
-                      {order.status === 'out_for_delivery' && (
-                        <Button 
-                          size="sm" 
-                          onClick={() => handleOrderUpdate(order.id, 'delivered')}
-                          className="bg-green-500 hover:bg-green-600 text-white"
-                        >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Mark Delivered
-                        </Button>
-                      )}
-                      
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => window.open(`tel:${order.customerPhone}`, '_self')}
-                      >
-                        <Phone className="w-4 h-4 mr-2" />
-                        Call
-                      </Button>
-                    </div>
-                    
-                    {/* Google Maps Navigation */}
-                    <GoogleMapsNavigation
-                      restaurantAddress={order.restaurantAddress || "METU Northern Cyprus Campus, Kalkanlı"}
-                      deliveryAddress={order.address}
-                      restaurantName={order.restaurant}
-                      customerName={order.customerName}
-                      customerPhone={order.customerPhone}
-                    />
+              assignments.map((assignment: any) => (
+                <div key={assignment.id} className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center">
+                    <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   </div>
-                ))}
-              </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900 dark:text-white">{assignment.restaurant.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{assignment.restaurant.cuisine}</p>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    Active
+                  </Badge>
+                </div>
+              ))
             )}
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <Link href="/order-history">
-                <Button variant="outline" className="w-full justify-start">
-                  <Clock className="w-4 h-4 mr-2" />
-                  View Order History
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => toast({ title: "Earnings Report", description: "Feature coming soon!" })}
-              >
-                <Star className="w-4 h-4 mr-2" />
-                View Earnings Report
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Active Orders */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg text-gray-900 dark:text-white flex items-center">
+              <Package className="w-5 h-5 mr-2" />
+              Active Deliveries ({activeOrders.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {activeOrders.length === 0 ? (
+              <div className="text-center py-8">
+                <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                <p className="text-gray-600 dark:text-gray-400">No active deliveries</p>
+                <p className="text-sm text-gray-500 dark:text-gray-500">New orders will appear here</p>
+              </div>
+            ) : (
+              activeOrders.map((order: any) => (
+                <div key={order.id} className="border border-gray-200 dark:border-dark-100 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-3 h-3 rounded-full ${getStatusColor(order.status)}`} />
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        Order #{order.id}
+                      </span>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      {order.status.replace('_', ' ').toUpperCase()}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                      <Package className="w-4 h-4 mr-2" />
+                      {order.restaurant.name}
+                    </div>
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                      <MapPin className="w-4 h-4 mr-2" />
+                      Campus Delivery
+                    </div>
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                      <Clock className="w-4 h-4 mr-2" />
+                      {new Date(order.createdAt).toLocaleTimeString('tr-TR', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="text-lg font-bold text-gray-900 dark:text-white">
+                      {order.total} ₺
+                    </div>
+                    {getNextStatus(order.status) && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleStatusUpdate(order.id, getNextStatus(order.status)!)}
+                        disabled={updateOrderStatusMutation.isPending}
+                        className="text-xs"
+                      >
+                        {getNextStatusLabel(order.status)}
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Order Items */}
+                  <div className="pt-2 border-t border-gray-100 dark:border-dark-100">
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mb-2">Items:</p>
+                    <div className="space-y-1">
+                      {order.orderItems.map((item: any, index: number) => (
+                        <div key={index} className="flex justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            {item.quantity}x {item.menuItem.name}
+                          </span>
+                          <span className="text-gray-900 dark:text-white">
+                            {item.price} ₺
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Instructions */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+              <p className="mb-2">📱 Your location is being tracked for delivery updates</p>
+              <p className="mb-2">🏍️ Pick up orders when ready and mark as delivered</p>
+              <p>💰 You earn 5 ₺ per completed delivery</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-      
-      {/* Chatbot */}
-      <Chatbot userType="courier" />
     </div>
   );
 }

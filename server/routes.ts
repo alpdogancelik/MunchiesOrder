@@ -1,6 +1,5 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { upload } from './multer-config';
 import { storage } from "./storage";
 import { sendOrderConfirmationEmail } from "./sendgrid";
 import { setupAuth } from "./auth";
@@ -355,23 +354,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, orderId, orderData } = req.body;
       
-      try {
-        const { sendOrderReceipt } = await import('./email');
-        const emailSent = await sendOrderReceipt(orderData);
-        
-        if (emailSent) {
-          res.json({ success: true, message: "Receipt sent successfully" });
-        } else {
-          console.warn("Email service returned false, but treating as non-critical");
-          res.json({ success: true, message: "Order processed (email delivery pending)" });
-        }
-      } catch (emailError) {
-        console.warn("Email service unavailable, continuing without email:", emailError);
-        res.json({ success: true, message: "Order processed (email service unavailable)" });
+      const { sendOrderReceipt } = await import('./email');
+      const emailSent = await sendOrderReceipt(orderData);
+      
+      if (emailSent) {
+        res.json({ success: true, message: "Receipt sent successfully" });
+      } else {
+        throw new Error("Failed to send email");
       }
     } catch (error) {
-      console.error("Error in receipt endpoint:", error);
-      res.status(500).json({ message: "Failed to process receipt request" });
+      console.error("Error sending receipt:", error);
+      res.status(500).json({ message: "Failed to send receipt" });
     }
   });
 
@@ -567,27 +560,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const restaurant = await storage.getRestaurant(orderData.restaurantId);
         const address = await storage.getAddress(orderData.addressId);
         
-        try {
-          await sendOrderConfirmationEmail({
-            orderNumber: order.id.toString(),
-            customerName: `${req.user.firstName || 'Student'} ${req.user.lastName || 'User'}`,
-            customerEmail: req.user.email || 'student@emu.edu.tr',
-            restaurantName: restaurant?.name || 'Campus Restaurant',
-            items: orderItems?.map(item => ({
-              name: item.name || 'Menu Item',
-              quantity: item.quantity || 1,
-              price: item.price || 0
-            })) || [{ name: 'Order Items', quantity: 1, price: orderData.total }],
-            total: orderData.total,
-            paymentMethod: orderData.paymentMethod,
-            deliveryAddress: address?.address || 'Campus Address'
-          });
-          console.log('Order confirmation email sent successfully');
-        } catch (emailSendError) {
-          console.warn('Email service failed, but order will continue:', emailSendError);
-        }
+        await sendOrderConfirmationEmail({
+          orderNumber: order.id.toString(),
+          customerName: `${req.user.firstName || 'Student'} ${req.user.lastName || 'User'}`,
+          customerEmail: req.user.email || 'student@emu.edu.tr',
+          restaurantName: restaurant?.name || 'Campus Restaurant',
+          items: orderItems?.map(item => ({
+            name: item.name || 'Menu Item',
+            quantity: item.quantity || 1,
+            price: item.price || 0
+          })) || [{ name: 'Order Items', quantity: 1, price: orderData.total }],
+          total: orderData.total,
+          paymentMethod: orderData.paymentMethod,
+          deliveryAddress: address?.address || 'Campus Address'
+        });
+        console.log('Order confirmation email sent successfully');
       } catch (emailError) {
-        console.warn('Email preparation failed, continuing without email:', emailError);
+        console.error('Failed to send order confirmation email:', emailError);
         // Don't fail the order if email fails
       }
       
@@ -627,8 +616,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { orderId, orderData } = req.body;
       
-      // Import iyzico using dynamic import for ES module compatibility
-      const { default: iyzico } = await import('iyzipay');
+      // TODO: Implement iyzico payment initiation
+      // This should create a payment request with iyzico and return payment form URL
+      const iyzico = require('iyzipay');
       
       const iyzicoClient = new iyzico({
         apiKey: process.env.IYZICO_API_KEY || 'sandbox-api-key',
@@ -709,8 +699,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { token } = req.body;
       
-      // Import iyzico using dynamic import for ES module compatibility
-      const { default: iyzico } = await import('iyzipay');
+      // TODO: Implement iyzico payment verification
+      // This should verify the payment status with iyzico
+      const iyzico = require('iyzipay');
       
       const iyzicoClient = new iyzico({
         apiKey: process.env.IYZICO_API_KEY || 'sandbox-api-key',
@@ -778,31 +769,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const restaurantId = parseInt(req.params.id);
       
-      // Get real assigned couriers from database
-      const assignedCouriers = await storage.getRestaurantCouriers(restaurantId);
+      // Mock assigned couriers - initially empty, will show assignments after they're made
+      const assignedCouriers: any[] = [];
       
-      // Get full courier user details for each assignment
-      const couriersWithDetails = [];
-      for (const assignment of assignedCouriers) {
-        const courierUser = await storage.getUser(assignment.courier.id);
-        const courierProfile = await storage.getCourierProfile(assignment.courier.id);
-        
-        if (courierUser) {
-          couriersWithDetails.push({
-            id: courierUser.id,
-            username: courierUser.username,
-            firstName: courierUser.firstName,
-            lastName: courierUser.lastName,
-            email: courierUser.email,
-            isOnline: courierProfile?.isOnline || false,
-            vehicleType: courierProfile?.vehicleType || 'motorcycle',
-            rating: courierProfile?.rating || 4.5,
-            assignedAt: assignment.assignedAt
-          });
-        }
-      }
-      
-      res.json(couriersWithDetails);
+      res.json(assignedCouriers);
     } catch (error) {
       console.error("Error fetching restaurant couriers:", error);
       res.status(500).json({ message: "Failed to fetch couriers" });
@@ -814,45 +784,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const restaurantId = parseInt(req.params.id);
       const { courierId } = req.body;
       
-      // Create courier assignment
-      const assignment = await storage.assignCourierToRestaurant(courierId, restaurantId);
-      res.json(assignment);
-    } catch (error) {
-      console.error("Error assigning courier:", error);
-      res.status(400).json({ message: "Failed to assign courier" });
-    }
-  });
-
-  app.post('/api/restaurants/:id/couriers', isAuthenticated, async (req: any, res) => {
-    try {
-      const restaurantId = parseInt(req.params.id);
-      const { courierId } = req.body;
-      
       console.log(`Assigning courier ${courierId} to restaurant ${restaurantId}`);
       
-      // Use real database assignment
-      const assignment = await storage.assignCourierToRestaurant(courierId, restaurantId);
+      // Mock successful assignment for now
+      const assignment = {
+        id: Date.now(),
+        courierId,
+        restaurantId,
+        isActive: true,
+        assignedAt: new Date()
+      };
       
       res.json(assignment);
     } catch (error) {
       console.error("Error assigning courier:", error);
       res.status(500).json({ message: "Failed to assign courier" });
-    }
-  });
-
-  // Image upload route
-  app.post('/api/upload', isAuthenticated, upload.single('image'), async (req: any, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ message: "No image file provided" });
-      }
-
-      // Return the uploaded image path
-      const imageUrl = `/uploads/${req.file.filename}`;
-      res.json({ imageUrl });
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      res.status(500).json({ message: "Failed to upload image" });
     }
   });
 
@@ -914,21 +860,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Simplified courier routes (working version)
+  // Courier profile routes (new system)
   app.get('/api/courier/profile', isAuthenticated, async (req: any, res) => {
     try {
-      // Return a basic profile for any user accessing courier dashboard
-      const basicProfile = {
-        id: req.user.id,
-        name: `${req.user.firstName || 'Courier'} ${req.user.lastName || 'User'}`,
-        vehicleType: 'motorcycle',
-        isOnline: true,
-        isAvailable: true,
-        rating: 4.8,
-        completedDeliveries: 127
-      };
+      const userId = req.user.id;
+      console.log(`Fetching courier profile for user: ${userId}`);
       
-      res.json(basicProfile);
+      const courierProfile = await storage.getCourierProfile(userId);
+      if (!courierProfile) {
+        console.log(`No courier profile found for user: ${userId}`);
+        return res.status(404).json({ message: "Courier profile not found" });
+      }
+      
+      console.log(`Found courier profile:`, courierProfile);
+      res.json(courierProfile);
     } catch (error) {
       console.error("Error fetching courier profile:", error);
       res.status(500).json({ message: "Failed to fetch courier profile" });
@@ -937,48 +882,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/courier/profile', isAuthenticated, async (req: any, res) => {
     try {
-      // Mock profile creation success
-      const mockProfile = {
-        id: req.user.id,
-        ...req.body,
-        createdAt: new Date(),
-        isOnline: true
-      };
-      
-      res.json(mockProfile);
+      const userId = req.user.id;
+      const courierData = insertCourierSchema.parse({ ...req.body, userId });
+      const courierProfile = await storage.createCourierProfile(courierData);
+      res.json(courierProfile);
     } catch (error) {
       console.error("Error creating courier profile:", error);
       res.status(400).json({ message: "Failed to create courier profile" });
     }
   });
 
+  app.put('/api/courier/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const courierData = insertCourierSchema.partial().parse(req.body);
+      const updatedProfile = await storage.updateCourierProfile(userId, courierData);
+      res.json(updatedProfile);
+    } catch (error) {
+      console.error("Error updating courier profile:", error);
+      res.status(400).json({ message: "Failed to update courier profile" });
+    }
+  });
+
+  app.put('/api/courier/online-status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { isOnline } = req.body;
+      const updatedProfile = await storage.updateCourierOnlineStatus(userId, isOnline);
+      res.json(updatedProfile);
+    } catch (error) {
+      console.error("Error updating courier online status:", error);
+      res.status(400).json({ message: "Failed to update online status" });
+    }
+  });
+
   // Get available couriers (users with courier role)
   app.get('/api/couriers/available', async (req: any, res) => {
     try {
-      // Get real courier users from database
-      const courierUsers = await storage.getCourierUsers();
-      const availableCouriers = courierUsers.map(user => ({
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phone: user.phone,
-        vehicleType: "Motorbike", // Default for now
-        rating: "4.8", // Default rating
-        isOnline: true, // Assume online for now
-        profileImageUrl: user.profileImageUrl
-      }));
+      // Mock data for available couriers including Brian Kaya
+      const availableCouriers = [
+        {
+          id: "courier_1",
+          username: "Mehmet Kargaci",
+          email: "courier1@munchies.com",
+          vehicleType: "Bicycle",
+          rating: "4.8"
+        },
+        {
+          id: "courier_2", 
+          username: "Ayşe Motorculer",
+          email: "courier2@munchies.com",
+          vehicleType: "Motorbike",
+          rating: "4.9"
+        },
+        {
+          id: "courier_3",
+          username: "Ali Hızlı", 
+          email: "courier3@munchies.com",
+          vehicleType: "Car",
+          rating: "4.7"
+        },
+        {
+          id: "courier_4",
+          username: "Brian Kaya", 
+          email: "briankaya@munchies.com",
+          vehicleType: "Motorbike",
+          rating: "4.9"
+        }
+      ];
       res.json(availableCouriers);
     } catch (error) {
       console.error("Error fetching available couriers:", error);
       res.status(500).json({ message: "Failed to fetch couriers" });
     }
-  });
-
-  // Google Maps API key endpoint
-  app.get('/api/config/google-maps-key', (req, res) => {
-    res.text(process.env.GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY');
   });
 
   const httpServer = createServer(app);

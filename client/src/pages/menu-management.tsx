@@ -415,7 +415,6 @@ function MenuItemForm({
     isPopular: item?.isPopular || false,
     categoryId: item?.categoryId || null,
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -426,35 +425,10 @@ function MenuItemForm({
 
   const saveItemMutation = useMutation({
     mutationFn: async (data: any) => {
-      let finalImageUrl = data.imageUrl;
-      
-      // Upload image if new file selected
-      if (imageFile) {
-        const formData = new FormData();
-        formData.append('image', imageFile);
-        
-        try {
-          const uploadResponse = await fetch('/api/upload', {
-            method: 'POST',
-            credentials: 'include',
-            body: formData,
-          });
-          
-          if (uploadResponse.ok) {
-            const { imageUrl } = await uploadResponse.json();
-            finalImageUrl = imageUrl;
-          }
-        } catch (uploadError) {
-          console.error('Image upload failed:', uploadError);
-        }
-      }
-      
-      const submitData = { ...data, imageUrl: finalImageUrl };
-      
       if (item) {
-        await apiRequest("PUT", `/api/menu-items/${item.id}`, submitData);
+        await apiRequest("PUT", `/api/menu-items/${item.id}`, data);
       } else {
-        await apiRequest("POST", `/api/restaurants/${restaurantId}/menu`, submitData);
+        await apiRequest("POST", `/api/restaurants/${restaurantId}/menu`, data);
       }
     },
     onSuccess: () => {
@@ -622,8 +596,8 @@ function MenuItemForm({
                     Meal Photo
                   </label>
                   <ImageUpload
-                    onImageSelect={setImageFile}
-                    currentImage={formData.imageUrl}
+                    value={formData.imageUrl}
+                    onChange={(url) => handleChange('imageUrl', url)}
                   />
                 </div>
               </div>

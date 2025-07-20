@@ -12,7 +12,6 @@ import { LogoutButton } from "@/components/ui/logout-button";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
 import { NotificationPrompt } from "@/components/ui/notification-prompt";
-import { Chatbot } from "@/components/ui/chatbot";
 
 const cuisineFilters = ["All", "Pizza", "Burger", "Turkish", "Italian", "Asian", "Dessert", "Coffee"];
 
@@ -333,9 +332,6 @@ export default function StudentHome() {
           </TabsContent>
         </Tabs>
       </div>
-      
-      {/* Chatbot */}
-      <Chatbot userType="student" />
     </div>
   );
 }

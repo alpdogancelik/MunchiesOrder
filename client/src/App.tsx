@@ -1,4 +1,4 @@
-import React, { lazy } from "react";
+import React from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
-import SimpleLanding from "@/pages/simple-landing";
+import Landing from "@/pages/landing";
 import AuthPage from "@/pages/auth-page";
 import Home from "@/pages/home";
 import StudentHome from "@/pages/student-home";
@@ -37,14 +37,11 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
-      <Route path="/landing" component={SimpleLanding} />
+      <Route path="/landing" component={Landing} />
       {isLoading || !isAuthenticated ? (
-        <Route path="/" component={SimpleLanding} />
+        <Route path="/" component={Landing} />
       ) : (
         <>
-          {/* Always allow access to landing */}
-          <Route path="/landing" component={SimpleLanding} />
-          
           {/* Route based on user type */}
           {userType === 'courier' ? (
             <>
@@ -60,9 +57,7 @@ function Router() {
               <Route path="/admin/menu/:restaurantId" component={MenuManagement} />
               <Route path="/admin/couriers" component={CourierManagement} />
               <Route path="/admin/create-restaurant" component={CreateRestaurant} />
-              <Route path="/restaurant-profile" component={lazy(() => import("@/pages/restaurant-profile"))} />
               <Route path="/profile" component={Profile} />
-              <Route path="/landing" component={SimpleLanding} />
               {/* Developer Dashboard for super admins */}
               <Route path="/developer" component={DeveloperDashboard} />
             </>
@@ -77,7 +72,6 @@ function Router() {
               <Route path="/profile" component={Profile} />
               <Route path="/addresses" component={AddressManagement} />
               <Route path="/order-history" component={OrderHistory} />
-              <Route path="/landing" component={SimpleLanding} />
             </>
           )}
         </>

@@ -53,19 +53,6 @@ const enTranslations: Translations = {
   noOrdersYet: 'No orders yet',
   startOrdering: 'Start ordering from your favorite restaurants',
   browseRestaurants: 'Browse Restaurants',
-  placeOrder: 'Place Order',
-  orderPlaced: 'Order Placed Successfully',
-  paymentMethod: 'Payment Method',
-  cashOnDelivery: 'Cash on Delivery',
-  cardAtDoor: 'Card at Door',
-  onlinePayment: 'Online Payment',
-  deliveryAddress: 'Delivery Address',
-  specialInstructions: 'Special Instructions',
-  orderSummary: 'Order Summary',
-  subtotal: 'Subtotal',
-  deliveryFee: 'Delivery Fee',
-  serviceFee: 'Service Fee',
-  total: 'Total',
   orderStatus: {
     pending: 'Pending',
     confirmed: 'Confirmed',
@@ -141,19 +128,6 @@ const trTranslations: Translations = {
   noOrdersYet: 'Henüz sipariş yok',
   startOrdering: 'Favori restoranlarınızdan sipariş vermeye başlayın',
   browseRestaurants: 'Restoranları İncele',
-  placeOrder: 'Sipariş Ver',
-  orderPlaced: 'Sipariş Başarıyla Verildi',
-  paymentMethod: 'Ödeme Yöntemi',
-  cashOnDelivery: 'Kapıda Nakit Ödeme',
-  cardAtDoor: 'Kapıda Kart ile Ödeme',
-  onlinePayment: 'Online Ödeme',
-  deliveryAddress: 'Teslimat Adresi',
-  specialInstructions: 'Özel Talimatlar',
-  orderSummary: 'Sipariş Özeti',
-  subtotal: 'Ara Toplam',
-  deliveryFee: 'Teslimat Ücreti',
-  serviceFee: 'Hizmet Bedeli',
-  total: 'Toplam',
   orderStatus: {
     pending: 'Bekliyor',
     confirmed: 'Onaylandı',
@@ -177,7 +151,7 @@ const trTranslations: Translations = {
   
   // Munchies specific
   munchies: 'Munchies',
-  tagline: 'ODTÜ KKK ve Kalkanlı için yemek siparişi',
+  tagline: 'ODTÜ KKC ve Kalkanlı için yemek siparişi',
   getStarted: 'Başlayın',
 };
 

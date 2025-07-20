@@ -1,159 +1,216 @@
-import React, { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Camera, Upload, X } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Camera, Upload, X, Image as ImageIcon } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ImageUploadProps {
-  onImageSelect: (file: File) => void;
-  currentImage?: string;
+  value?: string;
+  onChange: (url: string) => void;
+  className?: string;
   accept?: string;
 }
 
-export function ImageUpload({ onImageSelect, currentImage, accept = "image/*" }: ImageUploadProps) {
-  const [preview, setPreview] = useState<string | null>(currentImage || null);
-  const [isDragging, setIsDragging] = useState(false);
+export function ImageUpload({ value, onChange, className = "", accept = "image/*" }: ImageUploadProps) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string>(value || "");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleFileSelect = (file: File) => {
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+
+    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
-        variant: "destructive",
-        title: "Invalid file",
+        title: "Invalid File",
         description: "Please select an image file",
-      });
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
-      toast({
         variant: "destructive",
-        title: "File too large",
-        description: "Please select an image smaller than 5MB",
       });
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-    
-    onImageSelect(file);
-  };
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please select an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileSelect(file);
+    setIsUploading(true);
+
+    try {
+      // Create a preview URL for immediate display
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        setPreviewUrl(dataUrl);
+        onChange(dataUrl); // For now, we'll use the data URL directly
+        setIsDialogOpen(false);
+        
+        toast({
+          title: "Image Uploaded",
+          description: "Your image has been successfully uploaded",
+        });
+      };
+      reader.readAsDataURL(file);
+
+      // In a production app, you would upload to a service like Firebase Storage, AWS S3, etc.
+      // Here's how you might implement that:
+      /*
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+      
+      const { url } = await response.json();
+      setPreviewUrl(url);
+      onChange(url);
+      setIsDialogOpen(false);
+      */
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
+  const handleGallerySelect = () => {
+    fileInputRef.current?.click();
   };
 
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
+  const handleCameraCapture = () => {
+    cameraInputRef.current?.click();
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      handleFileSelect(file);
-    }
-  };
-
-  const removeImage = () => {
-    setPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  const handleRemoveImage = () => {
+    setPreviewUrl("");
+    onChange("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
   };
 
   return (
-    <div className="space-y-4">
+    <div className={className}>
+      {/* Hidden file inputs */}
       <input
         ref={fileInputRef}
         type="file"
         accept={accept}
-        onChange={handleInputChange}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFileUpload(file);
+        }}
         className="hidden"
-        capture="environment"
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept={accept}
+        capture="environment" // Prefer back camera
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFileUpload(file);
+        }}
+        className="hidden"
       />
 
-      {preview ? (
-        <div className="relative">
-          <img
-            src={preview}
-            alt="Preview"
-            className="w-full h-48 object-cover rounded-lg"
-          />
-          <Button
-            type="button"
-            size="sm"
-            variant="destructive"
-            className="absolute top-2 right-2"
-            onClick={removeImage}
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      ) : (
-        <Card
-          className={`border-2 border-dashed p-8 text-center cursor-pointer transition-colors ${
-            isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-gray-400'
-          }`}
-          onDragEnter={handleDragEnter}
-          onDragLeave={handleDragLeave}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <div className="space-y-3">
-            <div className="flex justify-center gap-4">
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                <Camera className="w-6 h-6 text-gray-600" />
-              </div>
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                <Upload className="w-6 h-6 text-gray-600" />
-              </div>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900">Click or drag image here</p>
-              <p className="text-xs text-gray-500 mt-1">Take photo or upload from gallery</p>
-              <p className="text-xs text-gray-400 mt-1">Max size: 5MB</p>
-            </div>
-          </div>
+      {previewUrl ? (
+        <Card className="relative">
+          <CardContent className="p-2">
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className="w-full h-48 object-cover rounded-lg"
+            />
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleRemoveImage}
+              className="absolute top-3 right-3"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </CardContent>
         </Card>
+      ) : (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Card className="border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 cursor-pointer transition-colors">
+              <CardContent className="p-8 text-center">
+                <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400 mb-2">Add meal photo</p>
+                <p className="text-sm text-gray-500 dark:text-gray-500">
+                  Take a photo or choose from gallery
+                </p>
+              </CardContent>
+            </Card>
+          </DialogTrigger>
+
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Upload Meal Photo</DialogTitle>
+              <DialogDescription>
+                Choose how you'd like to add a photo of your meal
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <Button
+                onClick={handleCameraCapture}
+                disabled={isUploading}
+                className="w-full h-16 flex items-center justify-center space-x-3"
+                variant="outline"
+              >
+                <Camera className="w-6 h-6" />
+                <span>Take Photo</span>
+              </Button>
+
+              <Button
+                onClick={handleGallerySelect}
+                disabled={isUploading}
+                className="w-full h-16 flex items-center justify-center space-x-3"
+                variant="outline"
+              >
+                <Upload className="w-6 h-6" />
+                <span>Choose from Gallery</span>
+              </Button>
+
+              <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                <p>Maximum file size: 5MB</p>
+                <p>Supported formats: JPG, PNG, WebP</p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
-      <div className="flex gap-2 justify-center">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          Upload from Device
-        </Button>
-      </div>
+      {isUploading && (
+        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
+          <div className="bg-white dark:bg-gray-800 px-4 py-2 rounded-lg">
+            <p className="text-sm">Uploading...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

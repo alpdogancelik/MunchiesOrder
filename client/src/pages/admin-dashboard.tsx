@@ -11,8 +11,6 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { NotificationPrompt } from "@/components/ui/notification-prompt";
 import { ORDER_STATUS, ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from "@/lib/constants";
 import { Truck, Store } from "lucide-react";
-import { Chatbot } from "@/components/ui/chatbot";
-import { BackButton } from "@/components/ui/back-button";
 
 export default function AdminDashboard() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -287,9 +285,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-      
-      {/* Chatbot */}
-      <Chatbot userType="restaurant" />
     </div>
   );
 }

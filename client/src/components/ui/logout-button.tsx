@@ -18,21 +18,21 @@ export function LogoutButton({ variant = "outline" }: { variant?: "outline" | "g
       localStorage.removeItem('userType');
       
       toast({
-        title: "Çıkış yapıldı",
-        description: "Başka bir kullanıcı türü seçebilirsiniz",
+        title: "Logged out successfully",
+        description: "You can now select a different user type",
       });
       
-      // Immediately redirect to landing page
-      window.location.href = "/";
+      // Small delay then redirect to ensure session is cleared
+      setTimeout(() => {
+        window.location.replace("/landing");
+      }, 200);
     },
     onError: () => {
-      // Even if logout API fails, clear session and redirect
-      localStorage.removeItem('userType');
       toast({
-        title: "Çıkış yapıldı",
-        description: "Ana sayfaya yönlendiriliyorsunuz",
+        title: "Logout Failed",
+        description: "There was an error logging out",
+        variant: "destructive",
       });
-      window.location.href = "/";
     },
   });
 
@@ -45,7 +45,7 @@ export function LogoutButton({ variant = "outline" }: { variant?: "outline" | "g
       className="flex items-center gap-2"
     >
       <LogOut size={16} />
-{logoutMutation.isPending ? "Çıkış yapılıyor..." : "Çıkış"}
+      {logoutMutation.isPending ? "Signing out..." : "Logout"}
     </Button>
   );
 }
