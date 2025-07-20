@@ -177,7 +177,7 @@ const trTranslations: Translations = {
   
   // Munchies specific
   munchies: 'Munchies',
-  tagline: 'ODTÜ KKC ve Kalkanlı için yemek siparişi',
+  tagline: 'ODTÜ KKK ve Kalkanlı için yemek siparişi',
   getStarted: 'Başlayın',
 };
 
