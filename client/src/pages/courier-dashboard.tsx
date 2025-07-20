@@ -131,9 +131,9 @@ export default function CourierDashboard() {
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+              <a href="/" className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center hover:bg-orange-600 transition-colors">
                 <Truck className="w-6 h-6 text-white" />
-              </div>
+              </a>
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">🍽️ Munchies Courier</h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -150,9 +150,11 @@ export default function CourierDashboard() {
                 {isOnline ? 'Online' : 'Offline'}
               </Button>
               
-              <Button variant="ghost" size="sm">
-                <Settings className="w-5 h-5" />
-              </Button>
+              <a href="/">
+                <Button variant="outline" size="sm">
+                  Back to Home
+                </Button>
+              </a>
             </div>
           </div>
         </div>

@@ -109,11 +109,28 @@ export default function Landing() {
           <Button 
             onClick={handleGetStarted}
             size="lg" 
-            className="w-full h-12 text-base font-medium"
+            className="w-full h-12 text-base font-medium mb-6"
           >
             Get Started
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
+          
+          {/* Market Preview Section */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+            <div className="text-center">
+              <div className="text-2xl mb-2">🛒</div>
+              <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-1">
+                Munchies Market
+              </h3>
+              <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
+                Campus groceries & essentials delivery
+              </p>
+              <div className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-xs">
+                <Clock className="w-3 h-3" />
+                Coming Soon
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Features */}
