@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock, Package, CheckCircle, Truck, Navigation, Phone, Star, User, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { UserTypeSwitcher } from "@/components/ui/user-type-switcher";
 
 export default function CourierDashboard() {
   const { toast } = useToast();
@@ -131,9 +133,9 @@ export default function CourierDashboard() {
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <a href="/" className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center hover:bg-orange-600 transition-colors">
+              <Link href="/landing" className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center hover:bg-orange-600 transition-colors">
                 <Truck className="w-6 h-6 text-white" />
-              </a>
+              </Link>
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">🍽️ Munchies Courier</h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -150,11 +152,18 @@ export default function CourierDashboard() {
                 {isOnline ? 'Online' : 'Offline'}
               </Button>
               
-              <a href="/">
-                <Button variant="outline" size="sm">
-                  Back to Home
-                </Button>
-              </a>
+              <div className="flex gap-2">
+                <Link href="/landing">
+                  <Button variant="outline" size="sm">
+                    🏠 Home
+                  </Button>
+                </Link>
+                <Link href="/profile">
+                  <Button variant="ghost" size="sm">
+                    <User className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

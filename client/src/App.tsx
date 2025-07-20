@@ -42,6 +42,9 @@ function Router() {
         <Route path="/" component={Landing} />
       ) : (
         <>
+          {/* Always allow access to landing */}
+          <Route path="/landing" component={Landing} />
+          
           {/* Route based on user type */}
           {userType === 'courier' ? (
             <>
@@ -58,6 +61,7 @@ function Router() {
               <Route path="/admin/couriers" component={CourierManagement} />
               <Route path="/admin/create-restaurant" component={CreateRestaurant} />
               <Route path="/profile" component={Profile} />
+              <Route path="/landing" component={Landing} />
               {/* Developer Dashboard for super admins */}
               <Route path="/developer" component={DeveloperDashboard} />
             </>
@@ -72,6 +76,7 @@ function Router() {
               <Route path="/profile" component={Profile} />
               <Route path="/addresses" component={AddressManagement} />
               <Route path="/order-history" component={OrderHistory} />
+              <Route path="/landing" component={Landing} />
             </>
           )}
         </>
