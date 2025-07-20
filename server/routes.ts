@@ -901,37 +901,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get available couriers (users with courier role)
   app.get('/api/couriers/available', async (req: any, res) => {
     try {
-      // Mock data for available couriers including Brian Kaya
-      const availableCouriers = [
-        {
-          id: "courier_1",
-          username: "Mehmet Kargaci",
-          email: "courier1@munchies.com",
-          vehicleType: "Bicycle",
-          rating: "4.8"
-        },
-        {
-          id: "courier_2", 
-          username: "Ayşe Motorculer",
-          email: "courier2@munchies.com",
-          vehicleType: "Motorbike",
-          rating: "4.9"
-        },
-        {
-          id: "courier_3",
-          username: "Ali Hızlı", 
-          email: "courier3@munchies.com",
-          vehicleType: "Car",
-          rating: "4.7"
-        },
-        {
-          id: "courier_4",
-          username: "Brian Kaya", 
-          email: "briankaya@munchies.com",
-          vehicleType: "Motorbike",
-          rating: "4.9"
-        }
-      ];
+      // Get real courier users from database
+      const courierUsers = await storage.getCourierUsers();
+      const availableCouriers = courierUsers.map(user => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+        vehicleType: "Motorbike", // Default for now
+        rating: "4.8", // Default rating
+        isOnline: true, // Assume online for now
+        profileImageUrl: user.profileImageUrl
+      }));
       res.json(availableCouriers);
     } catch (error) {
       console.error("Error fetching available couriers:", error);

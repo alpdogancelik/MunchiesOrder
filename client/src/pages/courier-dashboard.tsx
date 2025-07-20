@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock, Package, CheckCircle, Truck, Navigation, Phone, Star, User, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { UserTypeSwitcher } from "@/components/ui/user-type-switcher";
+import { Chatbot } from "@/components/ui/chatbot";
+import { BackButton } from "@/components/ui/back-button";
 
 export default function CourierDashboard() {
   const { toast } = useToast();
@@ -285,12 +287,20 @@ export default function CourierDashboard() {
                         </Button>
                       )}
                       
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(`https://maps.google.com/?daddr=${encodeURIComponent(order.address)}`, '_blank')}
+                      >
                         <Navigation className="w-4 h-4 mr-2" />
                         Navigate
                       </Button>
                       
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(`tel:${order.customerPhone}`, '_self')}
+                      >
                         <Phone className="w-4 h-4 mr-2" />
                         Call Customer
                       </Button>
@@ -306,16 +316,22 @@ export default function CourierDashboard() {
         <div className="grid grid-cols-2 gap-4">
           <Card>
             <CardContent className="p-4">
-              <Button variant="outline" className="w-full justify-start">
-                <Clock className="w-4 h-4 mr-2" />
-                View Order History
-              </Button>
+              <Link href="/order-history">
+                <Button variant="outline" className="w-full justify-start">
+                  <Clock className="w-4 h-4 mr-2" />
+                  View Order History
+                </Button>
+              </Link>
             </CardContent>
           </Card>
           
           <Card>
             <CardContent className="p-4">
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => toast({ title: "Earnings Report", description: "Feature coming soon!" })}
+              >
                 <Star className="w-4 h-4 mr-2" />
                 View Earnings Report
               </Button>
@@ -323,6 +339,9 @@ export default function CourierDashboard() {
           </Card>
         </div>
       </div>
+      
+      {/* Chatbot */}
+      <Chatbot userType="courier" />
     </div>
   );
 }

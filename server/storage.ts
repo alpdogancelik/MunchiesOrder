@@ -830,6 +830,11 @@ export class DatabaseStorage implements IStorage {
     return updatedCourier;
   }
 
+  async getCourierUsers(): Promise<User[]> {
+    const courierUsers = await db.select().from(users).where(eq(users.role, 'courier'));
+    return courierUsers;
+  }
+
   // Courier restaurant assignment operations (new system)
   async createCourierRestaurantAssignment(assignment: InsertCourierRestaurantAssignment): Promise<CourierRestaurantAssignment> {
     const [newAssignment] = await db
