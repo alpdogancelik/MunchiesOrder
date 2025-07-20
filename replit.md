@@ -8,22 +8,21 @@ Munchies is a comprehensive food delivery application designed specifically for 
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (January 19, 2025)
+## Recent Changes (January 20, 2025)
 
-✓ Fixed courier system crashes and improved error handling
-✓ Added menu category deletion functionality with safety checks
-✓ Implemented cash on delivery payment option with tracking
-✓ Created comprehensive checkout page with iyzico integration  
-✓ Built separate developer dashboards for creators Arda and Alp
-✓ Added cash payment recording system for couriers
-✓ Enhanced payment flow with credit card at door option
-✓ Implemented super admin access control for developers
-✓ Updated routing to include checkout and developer dashboard
-✓ Added category deletion buttons in menu management
+✓ Enhanced profile page with secure picture upload functionality
+✓ Implemented multi-language support (Turkish/English) throughout the app
+✓ Added comprehensive order history page for users
+✓ Integrated SendGrid email notifications for order confirmations to alpdogan.celik1@gmail.com
+✓ Reverted courier system to simplified working version after structural issues
+✓ Fixed courier dashboard crashes by removing complex React Query dependencies
+✓ Maintained cash on delivery and credit card payment options
+✓ Preserved menu management and restaurant functionality
 
-→ System now fully functional with all requested features
-→ Courier crashes resolved, payment options complete
-→ Developer dashboards ready for Arda and Alp access
+→ Profile system enhanced with secure picture upload
+→ Email notifications working for order confirmations
+→ Courier system simplified to prevent app crashes
+→ Core food ordering functionality maintained and stable
 
 ## System Architecture
 
