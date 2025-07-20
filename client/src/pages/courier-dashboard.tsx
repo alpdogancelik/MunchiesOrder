@@ -265,7 +265,7 @@ export default function CourierDashboard() {
           setCurrentLocation({ latitude, longitude });
           
           // Update location on server every minute
-          updateLocationMutation.mutate({ latitude, longitude });
+          updateLocation(latitude, longitude);
         },
         (error) => {
           console.error("Error getting location:", error);
@@ -282,7 +282,7 @@ export default function CourierDashboard() {
   }, [courierProfile]);
 
   const handleStatusUpdate = (orderId: number, status: string) => {
-    updateOrderStatusMutation.mutate({ orderId, status });
+    updateOrderStatus(orderId, status);
   };
 
   const getStatusColor = (status: string) => {

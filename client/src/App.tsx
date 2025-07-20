@@ -16,6 +16,7 @@ import Payment from "@/pages/payment";
 import OrderTracking from "@/pages/order-tracking";
 import Profile from "@/pages/profile";
 import AddressManagement from "@/pages/address-management";
+import OrderHistory from "@/pages/order-history";
 import AdminDashboard from "@/pages/admin-dashboard";
 import MenuManagement from "@/pages/menu-management";
 import CourierTracking from "@/pages/courier-tracking";
@@ -70,6 +71,7 @@ function Router() {
               <Route path="/order/:id" component={OrderTracking} />
               <Route path="/profile" component={Profile} />
               <Route path="/addresses" component={AddressManagement} />
+              <Route path="/order-history" component={OrderHistory} />
             </>
           )}
         </>

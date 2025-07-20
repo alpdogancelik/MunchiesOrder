@@ -9,11 +9,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Logo } from "@/components/ui/logo";
+import { useLanguage } from "@/hooks/useLanguage";
+import { LanguageSelector } from "@/components/language-selector";
 
 export default function AuthPage() {
   const [, setLocation] = useLocation();
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
+  const { currentLanguage, changeLanguage, t } = useLanguage();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     username: "",

@@ -4,9 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Utensils, Clock, Shield, Star } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
+import { useLanguage } from "@/hooks/useLanguage";
+import { LanguageSelector } from "@/components/language-selector";
 
 export default function Landing() {
   const [userType, setUserType] = useState<'user' | 'restaurant' | 'courier'>('user');
+  const { currentLanguage, changeLanguage, t } = useLanguage();
 
   const features = [
     {
@@ -43,11 +46,19 @@ export default function Landing() {
         <div className="max-w-md mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Logo size="md" />
-            <Link href="/auth">
-              <Button variant="ghost" size="sm" className="text-gray-600 dark:text-gray-300">
-                Sign In
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <LanguageSelector 
+                currentLanguage={currentLanguage}
+                onLanguageChange={changeLanguage}
+                variant="ghost"
+                size="sm"
+              />
+              <Link href="/auth">
+                <Button variant="ghost" size="sm" className="text-gray-600 dark:text-gray-300">
+                  {t('login')}
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -57,11 +68,11 @@ export default function Landing() {
         <div className="pt-12 pb-8 text-center">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
             <span className="text-3xl">🍽️</span>
-            <span className="block mt-2">Taste the Campus</span>
+            <span className="block mt-2">{t('munchies')}</span>
             <span className="block text-orange-500 text-3xl">Crave & Receive</span>
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-sm mx-auto leading-relaxed">
-            From METU NCC's finest kitchens to your doorstep. Every meal tells a story, every bite creates a memory.
+            {t('tagline')}
           </p>
           
           {/* User Type Selection */}

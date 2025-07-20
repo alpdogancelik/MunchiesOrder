@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { sendOrderConfirmationEmail } from "./sendgrid";
 import { setupAuth } from "./auth";
 import { 
   insertAddressSchema,
@@ -553,6 +554,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Clear cart after order creation
       await storage.clearCart(userId);
+      
+      // Send order confirmation email
+      try {
+        const restaurant = await storage.getRestaurant(orderData.restaurantId);
+        const address = await storage.getAddress(orderData.addressId);
+        
+        await sendOrderConfirmationEmail({
+          orderNumber: order.id.toString(),
+          customerName: `${req.user.firstName || 'Student'} ${req.user.lastName || 'User'}`,
+          customerEmail: req.user.email || 'student@emu.edu.tr',
+          restaurantName: restaurant?.name || 'Campus Restaurant',
+          items: orderItems?.map(item => ({
+            name: item.name || 'Menu Item',
+            quantity: item.quantity || 1,
+            price: item.price || 0
+          })) || [{ name: 'Order Items', quantity: 1, price: orderData.total }],
+          total: orderData.total,
+          paymentMethod: orderData.paymentMethod,
+          deliveryAddress: address?.address || 'Campus Address'
+        });
+        console.log('Order confirmation email sent successfully');
+      } catch (emailError) {
+        console.error('Failed to send order confirmation email:', emailError);
+        // Don't fail the order if email fails
+      }
       
       res.json(order);
     } catch (error) {
