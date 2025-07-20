@@ -101,7 +101,7 @@ export function Chatbot({ userType }: ChatbotProps) {
 
   if (!isOpen) {
     return (
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-4 right-4 z-50 safe-area-inset">
         <Button
           onClick={() => setIsOpen(true)}
           className="rounded-full w-14 h-14 bg-orange-500 hover:bg-orange-600 shadow-lg"
@@ -113,7 +113,7 @@ export function Chatbot({ userType }: ChatbotProps) {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-80 h-96 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] sm:w-80 sm:h-96">
+    <div className="fixed bottom-4 right-4 left-4 sm:left-auto z-50 sm:w-80 h-[70vh] sm:h-96 max-h-[calc(100vh-2rem)]">
       <Card className="h-full flex flex-col shadow-xl">
         <CardHeader className="flex-row items-center justify-between p-4 bg-orange-500 text-white rounded-t-lg">
           <CardTitle className="text-sm font-medium">
@@ -145,7 +145,7 @@ export function Chatbot({ userType }: ChatbotProps) {
                   </div>
                 )}
                 <div
-                  className={`max-w-xs rounded-lg p-3 text-sm ${
+                  className={`max-w-[70%] rounded-lg p-3 text-sm ${
                     message.sender === 'user'
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-100 text-gray-900'

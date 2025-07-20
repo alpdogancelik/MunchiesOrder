@@ -1,159 +1,159 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Camera, Upload, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ImageUploadProps {
   onImageSelect: (file: File) => void;
   currentImage?: string;
-  className?: string;
+  accept?: string;
 }
 
-export function ImageUpload({ onImageSelect, currentImage, className = "" }: ImageUploadProps) {
+export function ImageUpload({ onImageSelect, currentImage, accept = "image/*" }: ImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(currentImage || null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
-      toast({
-        title: "File too large",
-        description: "Please select an image smaller than 10MB",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleFileSelect = (file: File) => {
     if (!file.type.startsWith('image/')) {
       toast({
-        title: "Invalid file type",
-        description: "Please select an image file",
         variant: "destructive",
+        title: "Invalid file",
+        description: "Please select an image file",
       });
       return;
     }
 
-    setIsUploading(true);
-    
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: "Please select an image smaller than 5MB",
+      });
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setPreview(result);
-      setIsUploading(false);
-      onImageSelect(file);
-      
-      toast({
-        title: "Image selected",
-        description: "Your image has been selected successfully",
-      });
+      setPreview(e.target?.result as string);
     };
-    
-    reader.onerror = () => {
-      setIsUploading(false);
-      toast({
-        title: "Upload failed",
-        description: "Failed to process the image",
-        variant: "destructive",
-      });
-    };
-    
     reader.readAsDataURL(file);
+    
+    onImageSelect(file);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
   };
 
   const removeImage = () => {
     setPreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    if (cameraInputRef.current) cameraInputRef.current.value = '';
-  };
-
-  const triggerFileSelect = () => {
-    fileInputRef.current?.click();
-  };
-
-  const triggerCameraCapture = () => {
-    cameraInputRef.current?.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   return (
-    <div className={`space-y-4 ${className}`}>
-      {/* Hidden file inputs */}
+    <div className="space-y-4">
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
-        onChange={handleFileSelect}
+        accept={accept}
+        onChange={handleInputChange}
         className="hidden"
-      />
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
         capture="environment"
-        onChange={handleFileSelect}
-        className="hidden"
       />
 
-      {/* Preview area */}
       {preview ? (
-        <Card>
-          <CardContent className="p-4">
-            <div className="relative">
-              <img
-                src={preview}
-                alt="Preview"
-                className="w-full h-48 object-cover rounded-lg"
-              />
-              <Button
-                onClick={removeImage}
-                variant="destructive"
-                size="sm"
-                className="absolute top-2 right-2"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="relative">
+          <img
+            src={preview}
+            alt="Preview"
+            className="w-full h-48 object-cover rounded-lg"
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="destructive"
+            className="absolute top-2 right-2"
+            onClick={removeImage}
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
       ) : (
-        <Card className="border-dashed border-2">
-          <CardContent className="p-8">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                <Upload className="w-8 h-8 text-gray-400" />
+        <Card
+          className={`border-2 border-dashed p-8 text-center cursor-pointer transition-colors ${
+            isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-gray-400'
+          }`}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <div className="space-y-3">
+            <div className="flex justify-center gap-4">
+              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                <Camera className="w-6 h-6 text-gray-600" />
               </div>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Select an image for your menu item
-              </p>
-              <div className="flex gap-2 justify-center">
-                <Button
-                  onClick={triggerFileSelect}
-                  disabled={isUploading}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <Upload className="w-4 h-4" />
-                  {isUploading ? 'Processing...' : 'Choose File'}
-                </Button>
-                <Button
-                  onClick={triggerCameraCapture}
-                  disabled={isUploading}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <Camera className="w-4 h-4" />
-                  Camera
-                </Button>
+              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                <Upload className="w-6 h-6 text-gray-600" />
               </div>
             </div>
-          </CardContent>
+            <div>
+              <p className="text-sm font-medium text-gray-900">Click or drag image here</p>
+              <p className="text-xs text-gray-500 mt-1">Take photo or upload from gallery</p>
+              <p className="text-xs text-gray-400 mt-1">Max size: 5MB</p>
+            </div>
+          </div>
         </Card>
       )}
+
+      <div className="flex gap-2 justify-center">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <Upload className="w-4 h-4 mr-2" />
+          Upload from Device
+        </Button>
+      </div>
     </div>
   );
 }

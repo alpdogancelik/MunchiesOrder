@@ -814,6 +814,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const restaurantId = parseInt(req.params.id);
       const { courierId } = req.body;
       
+      // Create courier assignment
+      const assignment = await storage.assignCourierToRestaurant(courierId, restaurantId);
+      res.json(assignment);
+    } catch (error) {
+      console.error("Error assigning courier:", error);
+      res.status(400).json({ message: "Failed to assign courier" });
+    }
+  });
+
+  app.post('/api/restaurants/:id/couriers', isAuthenticated, async (req: any, res) => {
+    try {
+      const restaurantId = parseInt(req.params.id);
+      const { courierId } = req.body;
+      
       console.log(`Assigning courier ${courierId} to restaurant ${restaurantId}`);
       
       // Use real database assignment
@@ -960,6 +974,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error fetching available couriers:", error);
       res.status(500).json({ message: "Failed to fetch couriers" });
     }
+  });
+
+  // Google Maps API key endpoint
+  app.get('/api/config/google-maps-key', (req, res) => {
+    res.text(process.env.GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY');
   });
 
   const httpServer = createServer(app);

@@ -68,7 +68,7 @@ export default function Landing() {
             <span className="block text-orange-500 text-3xl">Crave & Receive</span>
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-sm mx-auto leading-relaxed">
-            {t('tagline')}
+            ODTÜ KKK ve Kalkanlı için yemek siparişi
           </p>
           
           {/* User Type Selection */}
@@ -105,7 +105,7 @@ export default function Landing() {
           <Button 
             onClick={handleGetStarted}
             size="lg" 
-            className="w-full h-12 text-base font-medium mb-6"
+            className="w-full h-12 text-base font-medium mb-6 bg-orange-500 hover:bg-orange-600 text-white"
           >
             Get Started
             <ArrowRight className="w-5 h-5 ml-2" />

@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UserTypeSwitcher } from "@/components/ui/user-type-switcher";
 import { Chatbot } from "@/components/ui/chatbot";
 import { BackButton } from "@/components/ui/back-button";
+import { GoogleMapsNavigation } from "@/components/ui/google-maps";
 
 export default function CourierDashboard() {
   const { toast } = useToast();
@@ -239,7 +240,7 @@ export default function CourierDashboard() {
                   <div key={order.id} className="border rounded-lg p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white">{order.restaurant}</h3>
+                        <h3 className="font-semibold text-gray-900 dark:text-white truncate max-w-[200px]">{order.restaurant}</h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400">Order #{order.id}</p>
                       </div>
                       <Badge className={`${getStatusColor(order.status)} text-white`}>
@@ -250,13 +251,13 @@ export default function CourierDashboard() {
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center gap-2 text-sm">
                         <User className="w-4 h-4 text-gray-500" />
-                        <span>{order.customerName}</span>
+                        <span className="truncate max-w-[150px]">{order.customerName}</span>
                         <Phone className="w-4 h-4 text-gray-500 ml-4" />
                         <span>{order.customerPhone}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <MapPin className="w-4 h-4 text-gray-500" />
-                        <span>{order.address}</span>
+                        <span className="truncate max-w-[250px]">{order.address}</span>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-gray-600">
                         <span>📍 {order.distance}</span>
@@ -264,7 +265,7 @@ export default function CourierDashboard() {
                       </div>
                     </div>
                     
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 mb-4">
                       {order.status === 'ready_for_pickup' && (
                         <Button 
                           size="sm" 
@@ -290,21 +291,21 @@ export default function CourierDashboard() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => window.open(`https://maps.google.com/?daddr=${encodeURIComponent(order.address)}`, '_blank')}
-                      >
-                        <Navigation className="w-4 h-4 mr-2" />
-                        Navigate
-                      </Button>
-                      
-                      <Button 
-                        variant="outline" 
-                        size="sm"
                         onClick={() => window.open(`tel:${order.customerPhone}`, '_self')}
                       >
                         <Phone className="w-4 h-4 mr-2" />
-                        Call Customer
+                        Call
                       </Button>
                     </div>
+                    
+                    {/* Google Maps Navigation */}
+                    <GoogleMapsNavigation
+                      restaurantAddress={order.restaurantAddress || "METU Northern Cyprus Campus, Kalkanlı"}
+                      deliveryAddress={order.address}
+                      restaurantName={order.restaurant}
+                      customerName={order.customerName}
+                      customerPhone={order.customerPhone}
+                    />
                   </div>
                 ))}
               </div>

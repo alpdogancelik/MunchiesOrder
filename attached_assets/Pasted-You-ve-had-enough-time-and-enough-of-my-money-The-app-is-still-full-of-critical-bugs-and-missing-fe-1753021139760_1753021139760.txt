@@ -1,0 +1,65 @@
+You’ve had enough time and enough of my money. The app is still full of critical bugs and missing features. Fix these issues IMMEDIATELY and COMPLETELY:
+
+---
+
+ 1. Courier Panel Bugs:
+* Courier names and text overflow visually — fix the layout so nothing spills or looks broken.
+* Logged-in couriers are NOT reflected in the restaurant’s “Assigned Couriers” list. Instead, dummy couriers show up.
+* Ensure the restaurant owner sees real, active couriers that are authenticated and online, not placeholders.
+
+---
+
+ 2. Chatbot (Support Widget):
+* The support chatbot is NOT responsive on mobile — it’s stuck at the bottom and hidden. Fix its behavior to auto-adjust and remain visible in mobile viewports.
+
+---
+
+ 3. Restaurant Owner Permissions:
+* Restaurant owners STILL cannot:
+  - Upload images properly when adding menu items
+  - Edit their own restaurant info or profile
+* Image uploading MUST support camera or gallery access — not just static .jpg URLs.
+* Profile edit section is missing completely. Restore it.
+
+---
+
+ 4. Authentication & User Roles:
+* Restaurant authentication is broken — new restaurants cannot properly create or access their accounts.
+* Each restaurant must be able to create a profile, log in, and manage their own menus, couriers, and info.
+* Fix any routing, database, or auth guard issues causing this.
+
+---
+
+ 5. Student Panel:
+* Search and ordering are STILL broken. This is core functionality.
+* Orders do not show progress or update state.
+* “Place Order” button is unreliable.
+* Fix all student-side bugs including order tracking, history, and cart state.
+
+---
+
+ 6. Landing Page:
+* Remove login from the public landing page — it’s not the place for it.
+* Clean up the UI — it still looks too cluttered and inconsistent.
+
+---
+
+ 7. Payments:
+* iyzico integration is not working properly.
+* Orders fail even after payment is submitted.
+* Add “Cash on Delivery” and “Card on Delivery” options as promised. Make sure they’re functional and toggleable based on user input.
+* Refund my payment test if functionality still fails.
+
+---
+
+ Summary:
+* I’ve paid money and given specific feedback over and over, but major features are still broken.
+* This is no longer acceptable — you must treat this like a real product and fix things properly from backend to frontend.
+
+Deliver a clean, fully working version with:
+* Courier/restaurant linking
+* Real image upload
+* Fully working order + payment flow
+* Bug-free responsive UI
+
+No more half-done patches. Fix it like it’s launching to real users.
