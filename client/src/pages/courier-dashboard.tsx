@@ -138,9 +138,9 @@ export default function CourierDashboard() {
               <Link href="/landing" className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center hover:bg-orange-600 transition-colors">
                 <Truck className="w-6 h-6 text-white" />
               </Link>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">🍽️ Munchies Courier</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">🍽️ Munchies Courier</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
                   {courierProfile?.name || 'Courier Dashboard'}
                 </p>
               </div>

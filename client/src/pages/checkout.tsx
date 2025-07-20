@@ -141,8 +141,8 @@ export default function Checkout() {
 
     const orderData = {
       addressId: selectedAddress,
-      paymentMethod: paymentMethod === "card" ? "iyzico" : paymentMethod,
-      paymentStatus: paymentMethod === "card" ? "pending" : 
+      paymentMethod: paymentMethod === "online" ? "iyzico" : paymentMethod,
+      paymentStatus: paymentMethod === "online" ? "pending" : 
         paymentMethod === "cash" ? "cash_on_delivery" : "card_at_door",
       specialInstructions,
       items: cartItems.map((item: any) => ({

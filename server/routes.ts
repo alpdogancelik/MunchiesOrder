@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { upload } from './multer-config';
 import { storage } from "./storage";
 import { sendOrderConfirmationEmail } from "./sendgrid";
 import { setupAuth } from "./auth";
@@ -769,10 +770,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const restaurantId = parseInt(req.params.id);
       
-      // Mock assigned couriers - initially empty, will show assignments after they're made
-      const assignedCouriers: any[] = [];
+      // Get real assigned couriers from database
+      const assignedCouriers = await storage.getRestaurantCouriers(restaurantId);
       
-      res.json(assignedCouriers);
+      // Get full courier user details for each assignment
+      const couriersWithDetails = [];
+      for (const assignment of assignedCouriers) {
+        const courierUser = await storage.getUser(assignment.courier.id);
+        const courierProfile = await storage.getCourierProfile(assignment.courier.id);
+        
+        if (courierUser) {
+          couriersWithDetails.push({
+            id: courierUser.id,
+            username: courierUser.username,
+            firstName: courierUser.firstName,
+            lastName: courierUser.lastName,
+            email: courierUser.email,
+            isOnline: courierProfile?.isOnline || false,
+            vehicleType: courierProfile?.vehicleType || 'motorcycle',
+            rating: courierProfile?.rating || 4.5,
+            assignedAt: assignment.assignedAt
+          });
+        }
+      }
+      
+      res.json(couriersWithDetails);
     } catch (error) {
       console.error("Error fetching restaurant couriers:", error);
       res.status(500).json({ message: "Failed to fetch couriers" });
@@ -786,19 +808,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Assigning courier ${courierId} to restaurant ${restaurantId}`);
       
-      // Mock successful assignment for now
-      const assignment = {
-        id: Date.now(),
-        courierId,
-        restaurantId,
-        isActive: true,
-        assignedAt: new Date()
-      };
+      // Use real database assignment
+      const assignment = await storage.assignCourierToRestaurant(courierId, restaurantId);
       
       res.json(assignment);
     } catch (error) {
       console.error("Error assigning courier:", error);
       res.status(500).json({ message: "Failed to assign courier" });
+    }
+  });
+
+  // Image upload route
+  app.post('/api/upload', isAuthenticated, upload.single('image'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file provided" });
+      }
+
+      // Return the uploaded image path
+      const imageUrl = `/uploads/${req.file.filename}`;
+      res.json({ imageUrl });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      res.status(500).json({ message: "Failed to upload image" });
     }
   });
 

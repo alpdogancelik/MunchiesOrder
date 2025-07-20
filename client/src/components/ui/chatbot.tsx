@@ -113,7 +113,7 @@ export function Chatbot({ userType }: ChatbotProps) {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-80 h-96">
+    <div className="fixed bottom-4 right-4 z-50 w-80 h-96 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] sm:w-80 sm:h-96">
       <Card className="h-full flex flex-col shadow-xl">
         <CardHeader className="flex-row items-center justify-between p-4 bg-orange-500 text-white rounded-t-lg">
           <CardTitle className="text-sm font-medium">

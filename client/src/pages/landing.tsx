@@ -53,11 +53,7 @@ export default function Landing() {
                 variant="ghost"
                 size="sm"
               />
-              <Link href="/auth">
-                <Button variant="ghost" size="sm" className="text-gray-600 dark:text-gray-300">
-                  {t('login')}
-                </Button>
-              </Link>
+
             </div>
           </div>
         </div>
