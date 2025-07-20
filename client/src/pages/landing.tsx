@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Utensils, Clock, Shield, Star } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { useLanguage } from "@/hooks/useLanguage";
-import { LanguageSelector } from "@/components/language-selector";
+import { LanguageSelector } from "@/components/ui/language-selector";
 
 export default function Landing() {
   const [userType, setUserType] = useState<'user' | 'restaurant' | 'courier'>('user');

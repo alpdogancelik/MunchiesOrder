@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing";
+import SimpleLanding from "@/pages/simple-landing";
 import AuthPage from "@/pages/auth-page";
 import Home from "@/pages/home";
 import StudentHome from "@/pages/student-home";
@@ -37,13 +37,13 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
-      <Route path="/landing" component={Landing} />
+      <Route path="/landing" component={SimpleLanding} />
       {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <Route path="/" component={SimpleLanding} />
       ) : (
         <>
           {/* Always allow access to landing */}
-          <Route path="/landing" component={Landing} />
+          <Route path="/landing" component={SimpleLanding} />
           
           {/* Route based on user type */}
           {userType === 'courier' ? (
@@ -62,7 +62,7 @@ function Router() {
               <Route path="/admin/create-restaurant" component={CreateRestaurant} />
               <Route path="/restaurant-profile" component={lazy(() => import("@/pages/restaurant-profile"))} />
               <Route path="/profile" component={Profile} />
-              <Route path="/landing" component={Landing} />
+              <Route path="/landing" component={SimpleLanding} />
               {/* Developer Dashboard for super admins */}
               <Route path="/developer" component={DeveloperDashboard} />
             </>
@@ -77,7 +77,7 @@ function Router() {
               <Route path="/profile" component={Profile} />
               <Route path="/addresses" component={AddressManagement} />
               <Route path="/order-history" component={OrderHistory} />
-              <Route path="/landing" component={Landing} />
+              <Route path="/landing" component={SimpleLanding} />
             </>
           )}
         </>
