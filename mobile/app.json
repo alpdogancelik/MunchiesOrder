@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "mobile",
+    "slug": "mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "fastfood",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.munchies.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.munchies.app",
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "EXPO_PUBLIC_APPWRITE_ENDPOINT": "https://fra.cloud.appwrite.io/v1",
+      "EXPO_PUBLIC_APPWRITE_PROJECT_ID": "690cc7fb00038ed041f1",
+      "EXPO_PUBLIC_APPWRITE_DATABASE_ID": "690cddb900361105d25c",
+      "EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID": "user",
+      "EXPO_PUBLIC_APPWRITE_CATEGORIES_COLLECTION_ID": "categories",
+      "EXPO_PUBLIC_APPWRITE_MENU_COLLECTION_ID": "menus",
+      "EXPO_PUBLIC_APPWRITE_CUSTOMIZATIONS_COLLECTION_ID": "customizations",
+      "EXPO_PUBLIC_APPWRITE_MENU_CUSTOMIZATIONS_COLLECTION_ID": "menucustomizations",
+      "EXPO_PUBLIC_APPWRITE_BUCKET_ID": "munchies-bucket"
+    }
+  }
+}

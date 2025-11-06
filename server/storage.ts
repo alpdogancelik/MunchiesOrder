@@ -59,6 +59,7 @@ export interface IStorage {
   updateAddress(id: number, address: Partial<InsertAddress>): Promise<Address>;
   deleteAddress(id: number): Promise<void>;
   setDefaultAddress(userId: string, addressId: number): Promise<void>;
+  getAddress(id: number): Promise<Address | undefined>;
 
   // Restaurant operations
   getRestaurants(): Promise<Restaurant[]>;
@@ -97,7 +98,7 @@ export interface IStorage {
   // Review operations
   createReview(review: InsertReview): Promise<Review>;
   getRestaurantReviews(restaurantId: number): Promise<(Review & { user: User })[]>;
-  
+
   // Security operations
   createSecurityLog(log: InsertSecurityLog): Promise<SecurityLog>;
   getSecurityLogs(userId?: string): Promise<SecurityLog[]>;
@@ -114,16 +115,16 @@ export interface IStorage {
   unassignCourierFromRestaurant(courierId: string, restaurantId: number): Promise<void>;
   getRestaurantCouriers(restaurantId: number): Promise<(CourierAssignment & { courier: User })[]>;
   getCourierAssignments(courierId: string): Promise<(CourierAssignment & { restaurant: Restaurant })[]>;
-  
+
   // Courier restaurant assignment operations (new system)
   createCourierRestaurantAssignment(assignment: InsertCourierRestaurantAssignment): Promise<CourierRestaurantAssignment>;
   getCourierRestaurantAssignments(courierId: number): Promise<(CourierRestaurantAssignment & { restaurant: Restaurant })[]>;
   getRestaurantCourierAssignments(restaurantId: number): Promise<any[]>;
-  
+
   // Courier location operations
   updateCourierLocation(courierId: string, latitude: number, longitude: number): Promise<CourierLocation>;
   getCourierLocation(courierId: string): Promise<CourierLocation | undefined>;
-  
+
   // Enhanced order operations for courier tracking
   getCourierOrders(userId: string): Promise<(Order & { restaurant: Restaurant; orderItems: (OrderItem & { menuItem: MenuItem })[] })[]>;
   assignOrderToCourier(orderId: number, courierId?: string): Promise<Order>;
@@ -185,6 +186,14 @@ export class DatabaseStorage implements IStorage {
       .from(addresses)
       .where(eq(addresses.userId, userId))
       .orderBy(desc(addresses.isDefault), asc(addresses.createdAt));
+  }
+
+  async getAddress(id: number): Promise<Address | undefined> {
+    const [address] = await db
+      .select()
+      .from(addresses)
+      .where(eq(addresses.id, id));
+    return address;
   }
 
   async createAddress(address: InsertAddress): Promise<Address> {
@@ -473,7 +482,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRestaurantOrders(restaurantId: number, status?: string): Promise<(Order & { user: User; address: Address; orderItems: (OrderItem & { menuItem: MenuItem })[] })[]> {
-    const whereConditions = status 
+    const whereConditions = status
       ? and(eq(orders.restaurantId, restaurantId), eq(orders.status, status))
       : eq(orders.restaurantId, restaurantId);
 
@@ -535,7 +544,7 @@ export class DatabaseStorage implements IStorage {
   async updateOrderStatus(id: number, status: string): Promise<Order> {
     const [updatedOrder] = await db
       .update(orders)
-      .set({ 
+      .set({
         status,
         updatedAt: new Date(),
       })
@@ -545,11 +554,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateOrderPayment(id: number, paymentStatus: string, paymentId?: string): Promise<Order> {
-    const updateData: any = { 
+    const updateData: any = {
       paymentStatus,
       updatedAt: new Date(),
     };
-    
+
     if (paymentId) {
       updateData.iyzico_payment_id = paymentId;
     }
@@ -772,7 +781,7 @@ export class DatabaseStorage implements IStorage {
   async assignOrderToCourier(orderId: number, courierId?: string): Promise<Order> {
     const [updatedOrder] = await db
       .update(orders)
-      .set({ 
+      .set({
         status: courierId ? 'assigned_to_courier' : 'ready',
         updatedAt: new Date(),
       })
@@ -809,7 +818,7 @@ export class DatabaseStorage implements IStorage {
   async updateCourierProfile(userId: string, courier: Partial<InsertCourier>): Promise<Courier> {
     const [updatedCourier] = await db
       .update(couriers)
-      .set({ 
+      .set({
         ...courier,
         updatedAt: new Date(),
       })
@@ -821,7 +830,7 @@ export class DatabaseStorage implements IStorage {
   async updateCourierOnlineStatus(userId: string, isOnline: boolean): Promise<Courier> {
     const [updatedCourier] = await db
       .update(couriers)
-      .set({ 
+      .set({
         isOnline,
         updatedAt: new Date(),
       })
@@ -874,7 +883,7 @@ export class DatabaseStorage implements IStorage {
     // Get orders from restaurants assigned to this courier
     const assignments = await this.getCourierRestaurantAssignments(courierProfile.id);
     const restaurantIds = assignments.map(a => a.restaurantId);
-    
+
     if (restaurantIds.length === 0) {
       return [];
     }

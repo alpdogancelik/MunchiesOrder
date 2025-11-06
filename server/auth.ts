@@ -1,20 +1,40 @@
-import passport from "passport";
+import * as passportNS from "passport";
+// Support both ESM and CJS builds of passport
+const passport: typeof import("passport") = (passportNS as any).default ?? (passportNS as any);
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import connectPg from "connect-pg-simple";
+import createMemoryStore from "memorystore";
+import { Pool } from "pg";
+import { buildPgConfig, hasDatabaseConfig } from "./pgConfig";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends SelectUser { }
   }
 }
 
 const scryptAsync = promisify(scrypt);
+
+// Resolve storage dynamically so we can run without a single DATABASE_URL
+const getStorage = (() => {
+  let cached: any | null = null;
+  return async () => {
+    if (cached) return cached;
+    if (hasDatabaseConfig()) {
+      const mod = await import("./storage.ts");
+      cached = mod.storage;
+    } else {
+      const mod = await import("./storage.memory.ts");
+      cached = mod.memoryStorage;
+    }
+    return cached;
+  };
+})();
 
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -29,23 +49,44 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
-export function setupAuth(app: Express) {
+async function isDbReachable(): Promise<boolean> {
+  const cfg = buildPgConfig();
+  if (!cfg) return false;
+  const pool = new Pool({ ...(cfg as any), max: 1, idleTimeoutMillis: 1000, connectionTimeoutMillis: 2000 });
+  try {
+    await pool.query("SELECT 1");
+    await pool.end();
+    return true;
+  } catch {
+    try { await pool.end(); } catch { }
+    return false;
+  }
+}
+
+export async function setupAuth(app: Express) {
   const PostgresSessionStore = connectPg(session);
-  
+  const MemoryStore = createMemoryStore(session);
+
+  // Prefer DB-backed sessions when the database is actually reachable; otherwise fall back to memory.
+  const useDb = hasDatabaseConfig() && await isDbReachable();
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET || "dev-insecure-secret",
     resave: false,
     saveUninitialized: false,
-    store: new PostgresSessionStore({ 
-      conString: process.env.DATABASE_URL,
-      createTableIfMissing: false, // Don't create since sessions table already exists
-      tableName: 'sessions' // Use existing table name
-    }),
+    store: useDb
+      ? new PostgresSessionStore({
+        // Use conObject in favor of a single connection string
+        conObject: buildPgConfig() as any,
+        createTableIfMissing: true,
+        tableName: "sessions",
+      })
+      : new MemoryStore({ checkPeriod: 24 * 60 * 60 * 1000 }),
     cookie: {
       httpOnly: true,
-      secure: false, // Set to true in production with HTTPS
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    }
+      secure: false, // set true in prod with HTTPS
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    },
   };
 
   app.set("trust proxy", 1);
@@ -53,11 +94,17 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Lightweight health check to verify auth routes are mounted
+  app.get("/api/__health_auth", (_req, res) => {
+    res.json({ ok: true, mode: useDb ? "db" : "memory" });
+  });
+
   passport.use(
     new LocalStrategy(
       { usernameField: 'username' }, // Use username instead of email
       async (username, password, done) => {
         try {
+          const storage = await getStorage();
           const user = await storage.getUserByUsername(username);
           if (!user || !(await comparePasswords(password, user.password))) {
             // Log failed login attempt
@@ -87,9 +134,10 @@ export function setupAuth(app: Express) {
     )
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
-  passport.deserializeUser(async (id: string, done) => {
+  passport.serializeUser((user: any, done: (err: any, id?: any) => void) => done(null, user.id));
+  passport.deserializeUser(async (id: string, done: (err: any, user?: any) => void) => {
     try {
+      const storage = await getStorage();
       const user = await storage.getUser(id);
       done(null, user);
     } catch (error) {
@@ -97,9 +145,15 @@ export function setupAuth(app: Express) {
     }
   });
 
+  // Explicitly document that this endpoint expects POST JSON
+  app.get("/api/register", (_req, res) => {
+    res.status(405).json({ message: "Use POST with JSON body to register" });
+  });
+
   app.post("/api/register", async (req, res, next) => {
     try {
       const { username, email, password, firstName, lastName } = req.body;
+      const storage = await getStorage();
 
       // Validate input
       if (!username || !email || !password) {
@@ -140,7 +194,7 @@ export function setupAuth(app: Express) {
 
       req.login(newUser, (err) => {
         if (err) return next(err);
-        res.status(201).json({ 
+        res.status(201).json({
           id: newUser.id,
           username: newUser.username,
           email: newUser.email,
@@ -149,9 +203,16 @@ export function setupAuth(app: Express) {
           profileImageUrl: newUser.profileImageUrl
         });
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      const isDev = (process.env.NODE_ENV || 'development') === 'development';
+      // Handle unique constraint errors gracefully
+      const msg = String(error?.message || "");
+      const code = (error && (error.code || error.sqlState)) || undefined;
+      if (code === '23505' || /duplicate key value/i.test(msg)) {
+        return res.status(400).json({ message: "Username or email already exists" });
+      }
+      res.status(500).json({ message: "Internal server error", detail: isDev ? msg : undefined });
     }
   });
 
@@ -161,7 +222,7 @@ export function setupAuth(app: Express) {
       if (!user) {
         return res.status(401).json({ message: "Invalid username or password" });
       }
-      
+
       req.login(user, (err) => {
         if (err) return next(err);
         res.status(200).json({
@@ -178,6 +239,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/logout", async (req, res, next) => {
     if (req.user) {
+      const storage = await getStorage();
       // Log logout
       await storage.createSecurityLog({
         userId: req.user.id,
@@ -187,7 +249,7 @@ export function setupAuth(app: Express) {
         details: { username: req.user.username }
       });
     }
-    
+
     req.logout((err) => {
       if (err) return next(err);
       res.sendStatus(200);
@@ -198,7 +260,7 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    
+
     const user = req.user as SelectUser;
     res.json({
       id: user.id,

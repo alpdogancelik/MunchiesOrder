@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { sendOrderConfirmationEmail } from "./sendgrid";
 import { setupAuth } from "./auth";
-import { 
+import {
   insertAddressSchema,
   insertRestaurantSchema,
   insertMenuCategorySchema,
@@ -27,8 +27,8 @@ function isAuthenticated(req: any, res: any, next: any) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup custom authentication
-  setupAuth(app);
+  // Setup custom authentication (await to ensure session store is ready)
+  await setupAuth(app);
 
   // User routes
   app.get('/api/user', isAuthenticated, async (req: any, res) => {
@@ -104,24 +104,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { search, category } = req.query;
       let restaurants = await storage.getRestaurants();
-      
+
       // Apply search filter
       if (search && typeof search === 'string') {
         const searchLower = search.toLowerCase();
-        restaurants = restaurants.filter(restaurant => 
+        restaurants = restaurants.filter(restaurant =>
           restaurant.name.toLowerCase().includes(searchLower) ||
           restaurant.description?.toLowerCase().includes(searchLower) ||
           restaurant.cuisine?.toLowerCase().includes(searchLower)
         );
       }
-      
+
       // Apply category filter
       if (category && typeof category === 'string') {
-        restaurants = restaurants.filter(restaurant => 
+        restaurants = restaurants.filter(restaurant =>
           restaurant.cuisine?.toLowerCase() === category.toLowerCase()
         );
       }
-      
+
       res.json(restaurants);
     } catch (error) {
       console.error("Error fetching restaurants:", error);
@@ -338,10 +338,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const orderId = parseInt(req.params.id);
       const { amountReceived, courierNotes } = req.body;
-      
+
       const order = await storage.updateOrderStatus(orderId, 'delivered');
       // Note: Additional payment fields would need schema updates
-      
+
       res.json(order);
     } catch (error) {
       console.error("Error recording cash payment:", error);
@@ -353,10 +353,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/send-receipt', async (req, res) => {
     try {
       const { email, orderId, orderData } = req.body;
-      
+
       const { sendOrderReceipt } = await import('./email');
       const emailSent = await sendOrderReceipt(orderData);
-      
+
       if (emailSent) {
         res.json({ success: true, message: "Receipt sent successfully" });
       } else {
@@ -376,7 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!['arda', 'alp'].includes(user.username.toLowerCase())) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       const stats = {
         uptime: process.uptime(),
         memory: process.memoryUsage(),
@@ -396,7 +396,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!['arda', 'alp'].includes(user.username.toLowerCase())) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       // Simplified for now - would need proper admin queries
       const stats = {
         total: 50,
@@ -418,7 +418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!['arda', 'alp'].includes(user.username.toLowerCase())) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       const restaurants = await storage.getRestaurants();
       const stats = {
         total: restaurants.length,
@@ -437,7 +437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!['arda', 'alp'].includes(user.username.toLowerCase())) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       // Simplified for now - would need proper order queries
       const orders = [];
       const stats = {
@@ -458,12 +458,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const { status } = req.query;
       let orders = await storage.getUserOrders(userId);
-      
+
       // Apply status filter for order history
       if (status && typeof status === 'string') {
         orders = orders.filter(order => order.status === status);
       }
-      
+
       res.json(orders);
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -512,14 +512,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/notifications/send', isAuthenticated, async (req: any, res) => {
     try {
       const { type, targetUserId, payload } = req.body;
-      
+
       // In a real implementation, you would:
       // 1. Get the user's notification token from database
       // 2. Send via FCM/Expo Push Service
       // 3. Store notification in database for history
-      
+
       console.log(`Sending ${type} notification to user ${targetUserId}:`, payload);
-      
+
       res.json({ success: true, message: 'Notification sent' });
     } catch (error) {
       console.error("Error sending notification:", error);
@@ -531,12 +531,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const { token, platform } = req.body;
-      
+
       // Store user's notification token
       // await storage.updateUserNotificationToken(userId, token, platform);
-      
+
       console.log(`Registered notification token for user ${userId}: ${token}`);
-      
+
       res.json({ success: true });
     } catch (error) {
       console.error("Error registering notification token:", error);
@@ -548,18 +548,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const { orderData, orderItems } = req.body;
-      
+
       const validatedOrderData = insertOrderSchema.parse({ ...orderData, userId });
       const order = await storage.createOrder(validatedOrderData, orderItems);
-      
+
       // Clear cart after order creation
       await storage.clearCart(userId);
-      
+
       // Send order confirmation email
       try {
         const restaurant = await storage.getRestaurant(orderData.restaurantId);
         const address = await storage.getAddress(orderData.addressId);
-        
+
         await sendOrderConfirmationEmail({
           orderNumber: order.id.toString(),
           customerName: `${req.user.firstName || 'Student'} ${req.user.lastName || 'User'}`,
@@ -579,7 +579,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('Failed to send order confirmation email:', emailError);
         // Don't fail the order if email fails
       }
-      
+
       res.json(order);
     } catch (error) {
       console.error("Error creating order:", error);
@@ -615,11 +615,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/payment/iyzico/initiate', isAuthenticated, async (req: any, res) => {
     try {
       const { orderId, orderData } = req.body;
-      
+
       // TODO: Implement iyzico payment initiation
       // This should create a payment request with iyzico and return payment form URL
       const iyzico = require('iyzipay');
-      
+
       const iyzicoClient = new iyzico({
         apiKey: process.env.IYZICO_API_KEY || 'sandbox-api-key',
         secretKey: process.env.IYZICO_SECRET_KEY || 'sandbox-secret-key',
@@ -682,7 +682,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('iyzico error:', err);
           return res.status(400).json({ message: 'Payment initiation failed' });
         }
-        
+
         res.json({
           success: true,
           paymentPageUrl: result.paymentPageUrl,
@@ -698,11 +698,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/payment/iyzico/callback', async (req, res) => {
     try {
       const { token } = req.body;
-      
+
       // TODO: Implement iyzico payment verification
       // This should verify the payment status with iyzico
       const iyzico = require('iyzipay');
-      
+
       const iyzicoClient = new iyzico({
         apiKey: process.env.IYZICO_API_KEY || 'sandbox-api-key',
         secretKey: process.env.IYZICO_SECRET_KEY || 'sandbox-secret-key',
@@ -724,11 +724,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (result.status === 'success') {
           // Extract order ID from conversation ID
           const orderId = parseInt(result.conversationId.replace('order-', ''));
-          
+
           // Update order payment status
           await storage.updateOrderPayment(orderId, 'completed', result.paymentId);
           await storage.updateOrderStatus(orderId, 'confirmed');
-          
+
           res.json({ success: true, orderId });
         } else {
           res.status(400).json({ message: 'Payment failed' });
@@ -768,10 +768,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/restaurants/:id/couriers', isAuthenticated, async (req: any, res) => {
     try {
       const restaurantId = parseInt(req.params.id);
-      
+
       // Mock assigned couriers - initially empty, will show assignments after they're made
       const assignedCouriers: any[] = [];
-      
+
       res.json(assignedCouriers);
     } catch (error) {
       console.error("Error fetching restaurant couriers:", error);
@@ -783,9 +783,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const restaurantId = parseInt(req.params.id);
       const { courierId } = req.body;
-      
+
       console.log(`Assigning courier ${courierId} to restaurant ${restaurantId}`);
-      
+
       // Mock successful assignment for now
       const assignment = {
         id: Date.now(),
@@ -794,7 +794,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: true,
         assignedAt: new Date()
       };
-      
+
       res.json(assignment);
     } catch (error) {
       console.error("Error assigning courier:", error);
@@ -865,13 +865,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       console.log(`Fetching courier profile for user: ${userId}`);
-      
+
       const courierProfile = await storage.getCourierProfile(userId);
       if (!courierProfile) {
         console.log(`No courier profile found for user: ${userId}`);
         return res.status(404).json({ message: "Courier profile not found" });
       }
-      
+
       console.log(`Found courier profile:`, courierProfile);
       res.json(courierProfile);
     } catch (error) {
@@ -929,7 +929,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           rating: "4.8"
         },
         {
-          id: "courier_2", 
+          id: "courier_2",
           username: "Ayşe Motorculer",
           email: "courier2@munchies.com",
           vehicleType: "Motorbike",
@@ -937,14 +937,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         {
           id: "courier_3",
-          username: "Ali Hızlı", 
+          username: "Ali Hızlı",
           email: "courier3@munchies.com",
           vehicleType: "Car",
           rating: "4.7"
         },
         {
           id: "courier_4",
-          username: "Brian Kaya", 
+          username: "Brian Kaya",
           email: "briankaya@munchies.com",
           vehicleType: "Motorbike",
           rating: "4.9"

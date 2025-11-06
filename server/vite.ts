@@ -22,7 +22,9 @@ export function log(message: string, source = "express") {
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
-    hmr: { server },
+    // Attach HMR to the same HTTP server but move socket path off '/'
+    // Using only 'path' lets Vite pick the current origin/port dynamically
+    hmr: { server, path: "/__vite_hmr" },
     allowedHosts: true as const,
   };
 
@@ -31,18 +33,41 @@ export async function setupVite(app: Express, server: Server) {
     configFile: false,
     customLogger: {
       ...viteLogger,
+      // Do not crash the dev server on Vite errors; just log them
       error: (msg, options) => {
         viteLogger.error(msg, options);
-        process.exit(1);
       },
     },
     server: serverOptions,
     appType: "custom",
   });
 
-  app.use(vite.middlewares);
+  // Serve service worker scripts from /public explicitly so they don't
+  // get transformed into HTML by Vite middlewares in dev.
+  const publicDir = path.resolve(import.meta.dirname, "..", "public");
+  app.get(["/sw.js", "/firebase-messaging-sw.js"], (req, res, next) => {
+    const file = req.path === "/firebase-messaging-sw.js" ? "firebase-messaging-sw.js" : "sw.js";
+    const abs = path.join(publicDir, file);
+    if (fs.existsSync(abs)) {
+      res.setHeader("Cache-Control", "no-store");
+      return res.sendFile(abs);
+    }
+    return next();
+  });
+
+  // Route all non-API requests through Vite middlewares
+  app.use((req, res, next) => {
+    const url = req.originalUrl;
+    if (url.startsWith("/api")) {
+      return next();
+    }
+    return (vite.middlewares as any)(req, res, next);
+  });
+
+  // Do not serve index.html for API routes
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
+    if (url.startsWith("/api")) return next();
 
     try {
       const clientTemplate = path.resolve(
