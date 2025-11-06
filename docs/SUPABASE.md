@@ -73,10 +73,10 @@ VITE_SUPABASE_ANON_KEY=<your-anon-or-publishable-key>
 ```
 npm i @supabase/supabase-js@^2
 ```
-3. The client initializer is in `client/src/lib/supabase.ts` and will read the Vite env vars above.
+3. The client initializer is in `mobile/src/lib/supabase.ts` and will read your Expo env configuration.
 
 Notes
-- Keep `client/.env.local` out of git (see `.gitignore`).
+- Keep your environment secrets out of git (for Expo, prefer using `app.config`, `eas secrets`, or a local `.env` loaded via a plugin).
 - The app already uses the server API and Postgres (Drizzle) for most data; using supabase-js on the client is optional.
  
 ## 7) Import sample data via CSV (optional)
