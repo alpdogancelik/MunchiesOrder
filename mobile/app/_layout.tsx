@@ -1,44 +1,65 @@
-import { SplashScreen, Stack } from "expo-router";
-import { useFonts } from 'expo-font';
 import { useEffect } from "react";
+import { SplashScreen, Stack } from "expo-router";
+import { useFonts } from "expo-font";
+import Constants from "expo-constants";
+import * as Sentry from "@sentry/react-native";
 
-import './globals.css';
-import * as Sentry from '@sentry/react-native';
 import useAuthStore from "@/store/auth.store";
+import { ThemeProvider } from "@/src/theme";
+import "./globals.css";
 
-Sentry.init({
-    dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0',
-    sendDefaultPii: true,
-    replaysSessionSampleRate: 1,
-    replaysOnErrorSampleRate: 1,
-    integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
-});
+const extra = Constants.expoConfig?.extra ?? {};
+const env = (typeof process !== "undefined" ? (process as any).env : undefined) ?? {};
+const sentryDsn = env.EXPO_PUBLIC_SENTRY_DSN || extra.EXPO_PUBLIC_SENTRY_DSN;
+const enableSentry = Boolean(sentryDsn);
 
-export default Sentry.wrap(function RootLayout() {
+if (enableSentry) {
+    Sentry.init({
+        dsn: sentryDsn,
+        sendDefaultPii: true,
+        replaysSessionSampleRate: 1,
+        replaysOnErrorSampleRate: 1,
+        integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
+    });
+}
+
+void SplashScreen.preventAutoHideAsync().catch(() => null);
+
+function RootLayoutBase() {
     const { isLoading, fetchAuthenticatedUser } = useAuthStore();
 
     const [fontsLoaded, error] = useFonts({
-        // NOTE: Fonts must exist in ./assets/fonts. Copy from food_ordering-main.
-        // Temporarily comment these if assets aren't copied yet.
-        "QuickSand-Bold": require('../assets/fonts/Quicksand-Bold.ttf'),
-        "QuickSand-Medium": require('../assets/fonts/Quicksand-Medium.ttf'),
-        "QuickSand-Regular": require('../assets/fonts/Quicksand-Regular.ttf'),
-        "QuickSand-SemiBold": require('../assets/fonts/Quicksand-SemiBold.ttf'),
-        "QuickSand-Light": require('../assets/fonts/Quicksand-Light.ttf'),
+        "QuickSand-Bold": require("../assets/fonts/Quicksand-Bold.ttf"),
+        "QuickSand-Medium": require("../assets/fonts/Quicksand-Medium.ttf"),
+        "QuickSand-Regular": require("../assets/fonts/Quicksand-Regular.ttf"),
+        "QuickSand-SemiBold": require("../assets/fonts/Quicksand-SemiBold.ttf"),
+        "QuickSand-Light": require("../assets/fonts/Quicksand-Light.ttf"),
     });
 
     useEffect(() => {
-        if (error) throw error;
-        if (fontsLoaded) SplashScreen.hideAsync();
-    }, [fontsLoaded, error]);
+        fetchAuthenticatedUser();
+    }, [fetchAuthenticatedUser]);
 
     useEffect(() => {
-        fetchAuthenticatedUser();
-    }, []);
+        if (fontsLoaded) {
+            SplashScreen.hideAsync().catch(() => null);
+        }
+    }, [fontsLoaded]);
 
+    if (error) throw error;
     if (!fontsLoaded || isLoading) return null;
 
-    return <Stack screenOptions={{ headerShown: false }} />;
-});
+    return (
+        <ThemeProvider>
+            <Stack screenOptions={{ headerShown: false }} />
+        </ThemeProvider>
+    );
+}
 
-Sentry.showFeedbackWidget();
+const RootLayout = enableSentry ? Sentry.wrap(RootLayoutBase) : RootLayoutBase;
+
+if (enableSentry) {
+    Sentry.showFeedbackWidget();
+}
+
+export default RootLayout;

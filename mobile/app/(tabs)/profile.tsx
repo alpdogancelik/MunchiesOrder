@@ -1,11 +1,215 @@
-import { View, Text } from 'react-native'
+import { useState } from "react";
+import { Alert, Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
+import "@/src/lib/i18n";
+import useAuthStore from "@/store/auth.store";
+import useServerResource from "@/lib/useServerResource";
+import { getAddresses, getUserOrders, logout } from "@/lib/api";
+import { router } from "expo-router";
+import { Badge, SectionHeader } from "@/src/components";
+
+const formatCurrency = (value?: number | string) => {
+    const amount = Number(value ?? 0);
+    if (Number.isNaN(amount)) return "TRY 0.00";
+    return `TRY ${amount.toFixed(2)}`;
+};
+
+const STATUS_VARIANT: Record<string, "success" | "warning" | "danger"> = {
+    preparing: "warning",
+    ready: "success",
+    canceled: "danger",
+};
 
 const Profile = () => {
-    return (
-        <View>
-            <Text>Profile</Text>
-        </View>
-    )
-}
+    const { user, setIsAuthenticated, setUser } = useAuthStore();
+    const { data: addresses } = useServerResource({ fn: getAddresses, skipAlert: true });
+    const { data: orders } = useServerResource({ fn: getUserOrders, skipAlert: true });
+    const [signingOut, setSigningOut] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+    const { t } = useTranslation();
 
-export default Profile
+    const initials = (user?.name || "Munchies User")
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+
+    const defaultAddress = addresses?.find((addr: any) => addr.isDefault) ?? addresses?.[0];
+    const activeOrders = (orders || []).filter((order: any) => order.status !== "delivered");
+
+    const handleLogout = async () => {
+        try {
+            setSigningOut(true);
+            await logout();
+        } catch (error: any) {
+            Alert.alert("Unable to sign out", error?.message || "Please try again.");
+        } finally {
+            setSigningOut(false);
+            setUser(null);
+            setIsAuthenticated(false);
+        }
+    };
+
+    const closeModal = () => setSelectedOrder(null);
+
+    return (
+        <SafeAreaView className="flex-1 bg-gray-50">
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 160 }}>
+                <View className="px-5 pt-6 gap-6">
+                    <View className="secondary-card bg-dark-80 border-0 shadow-2xl gap-4">
+                        <View className="flex-row items-center gap-4">
+                            <View className="size-16 rounded-full bg-white/10 border border-white/40 items-center justify-center">
+                                <Text className="h3-bold text-white">{initials}</Text>
+                            </View>
+                            <View className="flex-1">
+                                <Text className="text-white text-2xl font-quicksand-bold">{user?.name || "Munchies Student"}</Text>
+                                <Text className="body-medium text-white/70">{user?.email || "student@campus.edu"}</Text>
+                            </View>
+                        </View>
+                        <View className="flex-row gap-3">
+                            <TouchableOpacity
+                                className="hero-cta flex-1 items-center"
+                                onPress={() => Alert.alert(t("profile.header.edit"), t("misc.editSoon"))}
+                            >
+                                <Text className="text-white">{t("profile.header.edit")}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                className="flex-1 px-5 py-3 rounded-full bg-white/10 border border-white/30 items-center"
+                                disabled={signingOut}
+                                onPress={handleLogout}
+                            >
+                                <Text className="paragraph-semibold text-white">
+                                    {signingOut ? t("profile.header.signingOut") : t("profile.header.signOut")}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    <View className="secondary-card gap-3">
+                        <SectionHeader title={t("profile.defaultAddress")} />
+                        {defaultAddress ? (
+                            <View className="gap-1">
+                                <Text className="paragraph-semibold text-dark-100">{defaultAddress.title}</Text>
+                                <Text className="body-medium text-dark-60">
+                                    {defaultAddress.addressLine1}
+                                    {defaultAddress.addressLine2 ? `, ${defaultAddress.addressLine2}` : ""}
+                                </Text>
+                                <Text className="body-medium text-dark-60">
+                                    {defaultAddress.city}, {defaultAddress.country}
+                                </Text>
+                            </View>
+                        ) : (
+                            <Text className="body-medium text-dark-60">{t("profile.noAddress")}</Text>
+                        )}
+                        <TouchableOpacity
+                            className="chip self-start mt-2"
+                            onPress={() => Alert.alert(t("profile.manageAddresses"), t("misc.manageSoon"))}
+                        >
+                            <Text className="paragraph-semibold text-primary-dark">{t("profile.manageAddresses")}</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <View className="secondary-card gap-3">
+                        <SectionHeader title={t("profile.activeOrders")} />
+                        {activeOrders.length ? (
+                            activeOrders.map((order: any) => (
+                                <TouchableOpacity
+                                    key={order.id}
+                                    className="p-3 rounded-2xl border border-gray-100 mb-2"
+                                    onPress={() => setSelectedOrder(order)}
+                                >
+                                    <View className="flex-row items-center justify-between">
+                                        <Text className="paragraph-semibold text-dark-100">
+                                            {order.restaurant?.name || `Order #${order.id}`}
+                                        </Text>
+                                        <Badge
+                                            label={t(`status.${order.status}` as const)}
+                                            status={STATUS_VARIANT[order.status] || "warning"}
+                                        />
+                                    </View>
+                                    <Text className="body-medium text-dark-60 mt-1">
+                                        {`${formatCurrency(order.total)} - ${
+                                            order.paymentMethod === "cash" ? "Cash" : "Card"
+                                        }`}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))
+                        ) : (
+                            <Text className="body-medium text-dark-60">{t("profile.noActiveOrders")}</Text>
+                        )}
+                    </View>
+
+                    <View className="secondary-card gap-3">
+                        <SectionHeader title={t("profile.accountActions")} />
+                        {[
+                            { label: "Payment methods", description: "Add or remove saved cards" },
+                            { label: "Notification preferences", description: "SMS, push, and email" },
+                            { label: "Help center", description: "Chat with support" },
+                            { label: "Sipariş geçmişi", description: "Önceki siparişlerini incele", action: () => router.push("/orders") },
+                        ].map((item) => (
+                            <TouchableOpacity
+                                key={item.label}
+                                className="profile-field"
+                                onPress={
+                                    item.action || (() => Alert.alert("Çok yakında", `${item.label} sayfası üzerinde çalışıyoruz.`))
+                                }
+                            >
+                                <View className="profile-field__icon">
+                                    <Text className="paragraph-semibold text-primary-dark">{item.label[0]}</Text>
+                                </View>
+                                <View className="flex-1">
+                                    <Text className="paragraph-semibold text-dark-100">{item.label}</Text>
+                                    <Text className="body-medium text-dark-60">{item.description}</Text>
+                                </View>
+                            </TouchableOpacity>
+                        ))}
+                        <TouchableOpacity className="hero-cta mt-2 items-center" onPress={() => router.push("/restaurant/console")}>
+                            <Text className="text-white">{t("profile.restaurantConsole")}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity className="chip mt-2 bg-white border-primary" onPress={() => router.push("/restaurant/couriers")}>
+                            <Text className="paragraph-semibold text-primary-dark">{t("profile.courierConsole")}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </ScrollView>
+
+            {selectedOrder && (
+                <Modal animationType="slide" transparent visible onRequestClose={closeModal}>
+                    <View className="flex-1 bg-black/40 justify-center px-6">
+                        <View className="bg-white rounded-3xl p-5 gap-4">
+                            <Text className="text-xl font-quicksand-bold text-dark-100">{t("profile.modal.title")}</Text>
+                            <View className="flex-row justify-between items-center">
+                                <Text className="paragraph-semibold text-dark-60">{t("profile.modal.status")}</Text>
+                                <Badge
+                                    label={t(`status.${selectedOrder.status}` as const)}
+                                    status={STATUS_VARIANT[selectedOrder.status] || "warning"}
+                                />
+                            </View>
+                            <View className="flex-row justify-between">
+                                <Text className="paragraph-semibold text-dark-60">{t("profile.modal.eta")}</Text>
+                                <Text className="paragraph-semibold text-dark-100">{selectedOrder.eta ?? 25} min</Text>
+                            </View>
+                            <View className="flex-row justify-between">
+                                <Text className="paragraph-semibold text-dark-60">{t("profile.modal.total")}</Text>
+                                <Text className="h3-bold text-dark-100">{formatCurrency(selectedOrder.total)}</Text>
+                            </View>
+                            <View>
+                                <Text className="paragraph-semibold text-dark-80 mb-1">
+                                    {selectedOrder.restaurant?.name || `Order #${selectedOrder.id}`}
+                                </Text>
+                                <Text className="body-medium text-dark-60">{selectedOrder.address || "Campus pickup"}</Text>
+                            </View>
+                            <TouchableOpacity className="custom-btn" onPress={closeModal}>
+                                <Text className="paragraph-semibold text-white">{t("profile.modal.close")}</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+            )}
+        </SafeAreaView>
+    );
+};
+
+export default Profile;

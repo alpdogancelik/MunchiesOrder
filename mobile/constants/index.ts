@@ -45,11 +45,11 @@ import success from "@/assets/images/success.png";
 import tomatoes from "@/assets/images/tomatoes.png";
 
 export const CATEGORIES = [
-    { id: "1", name: "All" },
-    { id: "2", name: "Burger" },
-    { id: "3", name: "Pizza" },
-    { id: "4", name: "Wrap" },
-    { id: "5", name: "Burrito" },
+    { id: "all", name: "All", icon: search },
+    { id: "burger", name: "Burger", icon: burgerOne },
+    { id: "pizza", name: "Pizza", icon: pizzaOne },
+    { id: "wrap", name: "Wrap", icon: buritto },
+    { id: "bowl", name: "Bowl", icon: salad },
 ];
 
 export const offers = [

@@ -1,33 +1,34 @@
-# MunchiesOrder
+# MunchiesOrder (Expo)
 
-Temizlenmiş repo yapısı: web client ve Replit artefaktları kaldırıldı, odak Expo (mobile) + server + shared üzerinde.
+This repo now contains only the Expo React Native client. The old Vite/Express stack was removed to keep the codebase lean and focused on the mobile experience.
 
-## Yapı
-- `mobile/` — Expo (React Native) uygulaması
-- `server/` — Node/Express + Drizzle (Postgres)
-- `shared/` — Ortak tipler ve şema
-- `docs/` — Kurulum ve entegrasyon dokümanları (örn. `SUPABASE.md`)
+## Structure
+- `mobile/` – Expo Router app (NativeWind, Zustand, Appwrite helpers)
+- `.gitignore`, `README.md` – root metadata only
 
-## Hızlı Başlangıç
-- Ortam değişkenlerini `.env` dosyasına ekleyin (bkz. `docs/SUPABASE.md`).
-- Bağımlılıkları kurun ve geliştirme sunucusunu başlatın:
+## Getting started
 
 ```powershell
-# kök dizin
-npm i
-
-# server (opsiyonel ayrı çalıştırma gerekiyorsa)
-# npm run dev:server
-
-# mobile (Expo)
-cd mobile
-npm i
-npm run start
+cd "mobile"
+npm install
+npm run start        # expo start
 ```
 
-Notlar:
-- Tailwind config `mobile/shared/server` içeriklerini tarar; eski `client/` yolu kaldırıldı.
-- shadcn-ui için `components.json` CSS yolu `mobile/app/globals.css` olarak güncellendi.
+The Expo entry point is `app/_layout.tsx`. Platform folders (`ios`, `android`) are generated on demand via `npx expo prebuild`.
 
-## Lisans
-Bu proje sadece demo amaçlıdır.
+## Environment
+
+Expo public values live in `mobile/app.json` under `expo.extra`. Set at least:
+
+- `EXPO_PUBLIC_APPWRITE_ENDPOINT`
+- `EXPO_PUBLIC_APPWRITE_PROJECT_ID`
+
+Optional keys (Pexels, Sentry, etc.) are documented inside `mobile/README.md`.
+
+## Cleanup summary
+
+- Removed legacy directories (`client`, `server`, `shared`, `docs`, `data`, `migrations`, `scripts`, `public`, `node_modules` at root) and their configs.
+- Deleted obsolete root files (`package.json`, `.env*`, Drizzle/Vite/Tailwind configs) that belonged to the retired stack.
+- Kept the Expo project self-contained inside `mobile/` with its own dependencies, scripts, and documentation.
+
+Refer to `mobile/README.md` for feature-level docs and development notes.

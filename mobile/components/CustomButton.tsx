@@ -8,10 +8,25 @@ const CustomButton = ({
     style,
     textStyle,
     leftIcon,
-    isLoading = false
-}: { onPress?: () => void; title?: string; style?: string; textStyle?: string; leftIcon?: React.ReactNode; isLoading?: boolean }) => {
+    isLoading = false,
+    disabled = false,
+}: {
+    onPress?: () => void;
+    title?: string;
+    style?: string;
+    textStyle?: string;
+    leftIcon?: React.ReactNode;
+    isLoading?: boolean;
+    disabled?: boolean;
+}) => {
+    const isBusy = isLoading || disabled;
+
     return (
-        <TouchableOpacity className={cn('custom-btn', style)} onPress={onPress}>
+        <TouchableOpacity
+            className={cn('custom-btn', style, isBusy && 'opacity-60')}
+            disabled={isBusy}
+            onPress={onPress}
+        >
             {leftIcon}
 
             <View className="flex-center flex-row">

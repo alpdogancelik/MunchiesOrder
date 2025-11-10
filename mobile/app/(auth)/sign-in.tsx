@@ -29,15 +29,21 @@ const SignIn = () => {
             }
             router.replace('/');
         } catch (error: any) {
-            Alert.alert('Error', error.message);
-            Sentry.captureEvent(error);
+            Alert.alert('Error', error?.message || 'Unable to sign in right now.');
+            Sentry.captureException(error);
         } finally {
             setIsSubmitting(false);
         }
     }
 
     return (
-        <View className="gap-10 bg-white rounded-lg p-5 mt-5">
+        <View className="gap-10 bg-white rounded-3xl p-6 mt-6 shadow-lg shadow-primary/10">
+            <View className="items-center gap-2">
+                <Text className="text-4xl font-quicksand-bold text-dark-100 tracking-[8px]">MUNCHIES</Text>
+                <Text className="body-medium text-dark-60 text-center">
+                    Late-night cravings? Sign in and get fed in minutes.
+                </Text>
+            </View>
             <CustomInput
                 placeholder="Enter your email"
                 value={form.email}
@@ -56,6 +62,7 @@ const SignIn = () => {
             <CustomButton
                 title="Sign In"
                 isLoading={isSubmitting}
+                disabled={isSubmitting}
                 onPress={submit}
             />
 

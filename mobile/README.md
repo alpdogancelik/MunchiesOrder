@@ -1,67 +1,80 @@
-# Munchies Mobile — Expo Router + Appwrite (migrated)
+﻿# Munchies Mobile - Expo Router + Appwrite
 
-This app has been migrated to match the food_ordering-main architecture: Expo Router, NativeWind, Zustand and Appwrite.
+This app mirrors the `food_ordering-main` architecture: Expo Router, NativeWind, Zustand, and Appwrite helpers, packaged as a pure Expo project.
 
 ## Quick start
 
-1) Install dependencies:
+1. Install dependencies:
 
 ```powershell
 cd "c:\Users\alpdo\OneDrive\Desktop\MunchiesOrder (3)\MunchiesOrder\mobile"
 npm install
 ```
 
-2) Configure environment in `app.json` → `expo.extra`:
+2. Configure environment values in `app.json -> expo.extra`:
 
-- `EXPO_PUBLIC_APPWRITE_ENDPOINT`
-- `EXPO_PUBLIC_APPWRITE_PROJECT_ID`
+   **Appwrite (required)**
+   - `EXPO_PUBLIC_APPWRITE_ENDPOINT`
+   - `EXPO_PUBLIC_APPWRITE_PROJECT_ID`
+   - `EXPO_PUBLIC_APPWRITE_DATABASE_ID`
+   - `EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID`
+   - `EXPO_PUBLIC_APPWRITE_CATEGORIES_COLLECTION_ID`
+   - `EXPO_PUBLIC_APPWRITE_MENU_COLLECTION_ID`
+   - `EXPO_PUBLIC_APPWRITE_CUSTOMIZATIONS_COLLECTION_ID`
+   - `EXPO_PUBLIC_APPWRITE_MENU_CUSTOMIZATIONS_COLLECTION_ID`
+   - `EXPO_PUBLIC_APPWRITE_RESTAURANTS_COLLECTION_ID`
+   - `EXPO_PUBLIC_APPWRITE_ORDERS_COLLECTION_ID`
+   - `EXPO_PUBLIC_APPWRITE_BUCKET_ID`
 
-Optional: Sentry DSN (wired in `app/_layout.tsx`).
+   **Runtime toggles**
+   - `EXPO_PUBLIC_USE_MOCK_DATA` &mdash; keep as `"true"` for local mocks, set to `"false"` to hit the live Appwrite backend once your IDs are ready.
+   - `EXPO_PUBLIC_SENTRY_DSN` &mdash; optional; Sentry only initialises when this value exists.
 
-3) Copy assets from food_ordering-main (required):
+   **Other services**
+   - `EXPO_PUBLIC_API_BASE_URL` (optional Node/Express API for courier/restaurant tooling)
+   - `EXPO_PUBLIC_PEXELS_API_KEY` (enables the menu photo search helper)
 
-- Copy `food_ordering-main/assets/fonts/*.ttf` → `mobile/assets/fonts/`
-- Copy `food_ordering-main/assets/icons/*.png` → `mobile/assets/icons/`
-- Copy `food_ordering-main/assets/images/*.png` → `mobile/assets/images/`
+3. Copy assets from `food_ordering-main` (required):
+   - `assets/fonts/*.ttf` -> `mobile/assets/fonts/`
+   - `assets/icons/*.png` -> `mobile/assets/icons/`
+   - `assets/images/*.png` -> `mobile/assets/images/`
 
-The filenames must match; these are referenced by `constants/index.ts` and font loader in `app/_layout.tsx`.
-
-4) Start the app:
+4. Start the app:
 
 ```powershell
 npm run start
 ```
 
-- Press `a` to open Android (if an emulator is running) or scan the QR code with Expo Go.
+Press `a` in the Expo CLI to open Android (if an emulator is running) or scan the QR code with Expo Go.
 
 ## Structure
 
-- `app/` — Expo Router routes `(auth)`, `(tabs)`; `_layout.tsx` sets fonts/theme.
-- `components/` — UI building blocks: CustomInput/Button, CartItem, etc.
-- `constants/` — Theme assets and demo data.
-- `lib/appwrite.ts` — Appwrite SDK setup and data helpers.
-- `store/` — Zustand stores (auth, cart).
+- `app/` - Expo Router groups `(auth)`, `(tabs)`, `restaurant/*`; `_layout.tsx` wires fonts/theme/auth gating.
+- `components/` - Reusable UI (inputs, buttons, cards, search/filter, etc.).
+- `constants/` - Image/icon references plus seed lists.
+- `lib/` - Appwrite SDK helpers, API client fallbacks, hooks, and mock data.
+- `src/` - Shared order services, polling hooks, and screens (OrderPending experience).
+- `store/` - Zustand stores for auth and cart state.
+- `scripts/` - Utility scripts such as `seed-appwrite.mjs`.
 
 ## Styling
 
-NativeWind (Tailwind) is enabled. Use the `className` prop on RN components:
+NativeWind (Tailwind) is enabled. Use the `className` prop on React Native primitives:
 
 ```tsx
 <View className="p-4 bg-white" />
 ```
 
-Tailwind config lives in `tailwind.config.js`.
+Config lives in `tailwind.config.js`; Babel/Metro are already wired for NativeWind.
 
 ## Notes
 
-- Legacy `src/**` (Supabase + React Navigation) is excluded from build and can be deleted once migration is complete.
-- Tailwind and NativeWind are wired via `tailwind.config.js`, `babel.config.js` and `metro.config.js` (withNativeWind).
-- If you haven’t copied fonts yet, comment out the `useFonts` block in `app/_layout.tsx` temporarily to run without custom fonts.
+- The legacy Vite/Supabase stack was removed; `expo-router/entry` is the only entry point.
+- `EXPO_PUBLIC_USE_MOCK_DATA` keeps the UI in fully-offline mock mode. Flip it to `"false"` (or remove it) once real Appwrite collections are configured.
+- Fonts load in `app/_layout.tsx`; if you have not copied them yet, temporarily comment out `useFonts` while iterating.
 
 ## Next steps
 
-## Next steps
-
-- Wire Appwrite collections (IDs in `lib/appwrite.ts`) to your project or adapt to your schema.
-- Start seeding (optional) with the `lib/seed.ts` from the original project.
-- Remove `src/**` once you confirm the new router flow works end-to-end.
+- Wire Appwrite collections (IDs referenced in `lib/appwrite.ts`) or adapt the schema to your liking.
+- Seed optional content with `scripts/seed-appwrite.mjs` once your backend is reachable.
+- Drop production secrets (Appwrite, API base URL, Pexels, Sentry) into `app.json` or runtime env before publishing.

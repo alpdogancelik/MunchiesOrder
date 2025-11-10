@@ -11,7 +11,7 @@ export const dummyData = {
     ],
     customizations: [
         { name: "Extra Cheese", price: 25, type: "topping" },
-        { name: "Jalapeños", price: 20, type: "topping" },
+        { name: "Jalapenos", price: 20, type: "topping" },
         { name: "Onions", price: 10, type: "topping" },
         { name: "Olives", price: 15, type: "topping" },
         { name: "Mushrooms", price: 18, type: "topping" },
@@ -50,7 +50,7 @@ export const dummyData = {
             calories: 700,
             protein: 30,
             category_name: "Pizzas",
-            customizations: ["Extra Cheese", "Jalapeños", "Garlic Bread", "Coke", "Olives"]
+            customizations: ["Extra Cheese", "Jalapenos", "Garlic Bread", "Coke", "Olives"]
         },
         {
             name: "Bean Burrito",
@@ -61,7 +61,7 @@ export const dummyData = {
             calories: 480,
             protein: 18,
             category_name: "Burritos",
-            customizations: ["Jalapeños", "Iced Tea", "Fries", "Salad"]
+            customizations: ["Jalapenos", "Iced Tea", "Fries", "Salad"]
         },
         {
             name: "BBQ Bacon Burger",

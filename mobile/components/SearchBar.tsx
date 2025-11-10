@@ -1,21 +1,35 @@
 import { images } from "@/constants";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Image, TextInput, TouchableOpacity, View } from "react-native";
 
 const Searchbar = () => {
-    const params = useLocalSearchParams<{ query: string }>();
-    const [query, setQuery] = useState((params as any).query);
+    const params = useLocalSearchParams<{ query?: string | string[] }>();
+    const [query, setQuery] = useState("");
+
+    useEffect(() => {
+        const nextValue = Array.isArray(params.query) ? params.query[0] : params.query;
+        setQuery(nextValue ?? "");
+    }, [params.query]);
+
+    const updateRouteQuery = useCallback(
+        (value: string) => {
+            const trimmed = value.trim();
+            if (trimmed) router.setParams({ query: trimmed });
+            else router.setParams({ query: undefined });
+        },
+        [],
+    );
 
     const handleSearch = (text: string) => {
         setQuery(text);
 
-        if (!text) router.setParams({ query: undefined });
+        if (!text.trim()) updateRouteQuery("");
     };
 
     const handleSubmit = () => {
-        if ((query || '').trim()) router.setParams({ query });
-    }
+        updateRouteQuery(query);
+    };
 
     return (
         <View className="searchbar">
@@ -30,7 +44,7 @@ const Searchbar = () => {
             />
             <TouchableOpacity
                 className="pr-5"
-                onPress={() => router.setParams({ query })}
+                onPress={() => updateRouteQuery(query)}
             >
                 <Image
                     source={images.search}

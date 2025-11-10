@@ -4,10 +4,13 @@ import CustomInput from "@/components/CustomInput";
 import CustomButton from "@/components/CustomButton";
 import { useState } from "react";
 import { createUser } from "@/lib/appwrite";
+import useAuthStore from "@/store/auth.store";
 
 const SignUp = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [form, setForm] = useState({ name: '', email: '', password: '' });
+    const setUser = useAuthStore((s) => s.setUser);
+    const setIsAuthenticated = useAuthStore((s) => s.setIsAuthenticated);
 
     const submit = async () => {
         const { name, email, password } = form;
@@ -17,11 +20,16 @@ const SignUp = () => {
         setIsSubmitting(true)
 
         try {
-            await createUser({ email, password, name });
+            const profile = await createUser({ email, password, name });
+
+            if (profile) {
+                setUser({ name: profile.name, email: profile.email, avatar: profile.avatar });
+                setIsAuthenticated(true);
+            }
 
             router.replace('/');
         } catch (error: any) {
-            Alert.alert('Error', error.message);
+            Alert.alert('Error', error?.message || 'Unable to sign up. Please try again.');
         } finally {
             setIsSubmitting(false);
         }
@@ -53,6 +61,7 @@ const SignUp = () => {
             <CustomButton
                 title="Sign Up"
                 isLoading={isSubmitting}
+                disabled={isSubmitting}
                 onPress={submit}
             />
 

@@ -16,7 +16,7 @@ const MENU_ID = extra.EXPO_PUBLIC_APPWRITE_MENU_COLLECTION_ID;
 const CUSTOMIZATIONS_ID = extra.EXPO_PUBLIC_APPWRITE_CUSTOMIZATIONS_COLLECTION_ID;
 const MENU_CUSTOMIZATIONS_ID = extra.EXPO_PUBLIC_APPWRITE_MENU_CUSTOMIZATIONS_COLLECTION_ID;
 
-// IMPORTANT: Create an API Key in Appwrite Console (Project → API Keys) with Databases write permissions
+// IMPORTANT: Create an API Key in Appwrite Console (Project -> API Keys) with Databases write permissions
 const API_KEY = process.env.APPWRITE_API_KEY;
 
 if (!API_KEY) {
@@ -42,7 +42,7 @@ const categories = [
 
 const customizations = [
     { name: 'Extra Cheese', price: 25 },
-    { name: 'Jalapeños', price: 20 },
+    { name: 'Jalapenos', price: 20 },
     { name: 'Onions', price: 10 },
     { name: 'Fries', price: 35 },
     { name: 'Coke', price: 30 }

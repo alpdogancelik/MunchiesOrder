@@ -1,3 +1,0 @@
-owner_id,name,cuisine,delivery_radius,delivery_fee,delivery_time,is_active,address,phone,opening_hours,image_url
-owner-1,Munchies Kalkanlı,Burger,5,19.90,30-45 dk,true,"Kalkanlı Kampüs",+90 392 123 45 67,9:00-22:00,https://images.unsplash.com/photo-1550547660-d9450f859349
-owner-1,Akdeniz Pide,Pide,7,14.90,25-35 dk,true,"Lefkoşa",+90 392 555 00 11,10:00-23:00,https://images.unsplash.com/photo-1586816001966-79b736744398

@@ -13,7 +13,8 @@ export interface MenuItem extends Models.Document {
 
 export interface Category extends Models.Document {
     name: string;
-    description: string;
+    description?: string;
+    icon?: any;
 }
 
 export interface User extends Models.Document {
@@ -49,6 +50,27 @@ export interface CartStore {
     getTotalPrice: () => number;
 }
 
+export type OrderStatus = "pending" | "preparing" | "ready" | "out_for_delivery" | "delivered" | "canceled";
+
+export interface RestaurantOrder {
+    createdAt: string | undefined;
+    $id?: string;
+    id?: string | number;
+    restaurantId?: string | number;
+    restaurant?: {
+        id?: string | number;
+        name?: string;
+        imageUrl?: string;
+    };
+    customerName?: string;
+    address?: string;
+    total?: string | number;
+    status?: OrderStatus | string;
+    paymentMethod?: string;
+    orderItems?: { name?: string; quantity?: number }[];
+    updatedAt?: string;
+}
+
 interface TabBarIconProps {
     focused: boolean;
     icon: any;
@@ -69,6 +91,7 @@ interface CustomButtonProps {
     leftIcon?: React.ReactNode;
     textStyle?: string;
     isLoading?: boolean;
+    disabled?: boolean;
 }
 
 interface CustomHeaderProps {
