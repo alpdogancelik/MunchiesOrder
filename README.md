@@ -1,10 +1,11 @@
 # MunchiesOrder (Expo)
 
-This repo now contains only the Expo React Native client. The old Vite/Express stack was removed to keep the codebase lean and focused on the mobile experience.
+munchies order application / eating app for all campus residents.  
+The repo now focuses exclusively on the Expo React Native client; the older Vite/Express stack was removed to keep things lean and mobile-first.
 
 ## Structure
-- `mobile/` – Expo Router app (NativeWind, Zustand, Appwrite helpers)
-- `.gitignore`, `README.md` – root metadata only
+- `mobile/` — Expo Router app (NativeWind, Zustand, Appwrite helpers)
+- `.gitignore`, `README.md` — root metadata only
 
 ## Getting started
 
@@ -27,8 +28,7 @@ Optional keys (Pexels, Sentry, etc.) are documented inside `mobile/README.md`.
 
 ## Cleanup summary
 
-- Removed legacy directories (`client`, `server`, `shared`, `docs`, `data`, `migrations`, `scripts`, `public`, `node_modules` at root) and their configs.
-- Deleted obsolete root files (`package.json`, `.env*`, Drizzle/Vite/Tailwind configs) that belonged to the retired stack.
+- Removed legacy directories (`client`, `server`, `shared`, `docs`, `data`, `migrations`, `scripts`, `public`, root `package.json`, etc.) belonging to the retired stack.
 - Kept the Expo project self-contained inside `mobile/` with its own dependencies, scripts, and documentation.
 
 Refer to `mobile/README.md` for feature-level docs and development notes.
