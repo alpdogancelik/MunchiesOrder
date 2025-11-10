@@ -52,9 +52,7 @@ const createOrderSchema = z.object({
     userId: z.string(),
     restaurantId: z.string(),
     items: z.array(cartItemSchema).min(1),
-    paymentMethod: z.custom<PaymentMethod>((val) =>
-        val === "cash" || val === "card_pos" || val === "online",
-    ),
+    paymentMethod: z.custom<PaymentMethod>((val) => val === "cash" || val === "pos"),
     deliveryFee: z.number().nonnegative(),
     serviceFee: z.number().nonnegative(),
     discount: z.number().nonnegative(),

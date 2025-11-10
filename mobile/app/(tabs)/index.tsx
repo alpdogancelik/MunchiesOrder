@@ -19,6 +19,7 @@ import { images, offers } from "@/constants";
 import useHome from "@/src/hooks/useHome";
 import { Chip, Card, SectionHeader } from "@/src/components";
 import { useTheme, ThemeDefinition } from "@/src/theme";
+import { DeliverToHeader } from "@/src/features/address";
 
 export default function Index() {
     const {
@@ -75,11 +76,7 @@ export default function Index() {
             >
                 <View style={styles.header}>
                     <View>
-                        <Text style={styles.deliveryLabel}>DELIVER TO</Text>
-                        <TouchableOpacity style={styles.deliveryRow}>
-                            <Text style={styles.deliveryName}>{userName}</Text>
-                            <Image source={images.arrowDown} style={styles.arrowIcon} contentFit="contain" />
-                        </TouchableOpacity>
+                        <DeliverToHeader fallbackLabel={userName} />
                         <Text style={styles.deliveryEta}>ETA ~15 min</Text>
                     </View>
                     <CartButton />

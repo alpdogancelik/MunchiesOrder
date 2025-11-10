@@ -1,4 +1,4 @@
-export type PaymentMethod = "cash" | "card_pos" | "online";
+export type PaymentMethod = "cash" | "pos";
 
 export type OrderStatus =
     | "pending"
@@ -10,13 +10,14 @@ export type OrderStatus =
 
 export type Address = {
     id: string;
-    userId: string;
-    title: string;
-    addressLine1: string;
-    addressLine2?: string | null;
+    label: string;
+    line1: string;
+    block?: string;
+    room?: string;
     city: string;
     country: string;
-    isDefault?: boolean;
+    isDefault: boolean;
+    createdAt: string;
 };
 
 export type Restaurant = {
@@ -61,4 +62,13 @@ export type Order = {
     etaMinutes?: number;
     createdAt: string;
     updatedAt: string;
+};
+
+export type Review = {
+    id: string;
+    productId: string;
+    userId: string;
+    rating: 1 | 2 | 3 | 4 | 5;
+    comment?: string;
+    createdAt: string;
 };

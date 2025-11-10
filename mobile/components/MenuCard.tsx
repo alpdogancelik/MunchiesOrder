@@ -1,12 +1,23 @@
-import { memo, useCallback } from 'react';
-import { Text, TouchableOpacity, Platform, View } from 'react-native';
-import { Image } from 'expo-image';
+import { memo, useCallback, useMemo, useState } from "react";
+import { Alert, Platform, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
+import { Image } from "expo-image";
 import { appwriteConfig } from "@/lib/appwrite";
 import { useCartStore } from "@/store/cart.store";
+import { images } from "@/constants";
+import ReviewSheet from "@/src/features/reviews/ReviewSheet";
+import { useProductReviews } from "@/src/features/reviews/useProductReviews";
 
 type MenuCardProps = {
     item: any;
     onPress?: () => void;
+};
+
+const showToast = (message: string) => {
+    if (Platform.OS === "android") {
+        ToastAndroid.show(message, ToastAndroid.SHORT);
+    } else {
+        Alert.alert("Review", message);
+    }
 };
 
 const MenuCard = ({ item, onPress }: MenuCardProps) => {
@@ -18,6 +29,10 @@ const MenuCard = ({ item, onPress }: MenuCardProps) => {
         : undefined;
     const { addItem } = useCartStore();
     const numericPrice = Number(price || 0);
+    const productId = $id || item?.id || name;
+    const { average, count, currentUserReview, submitReview, isSubmitting } = useProductReviews(productId);
+    const [sheetVisible, setSheetVisible] = useState(false);
+    const averageLabel = useMemo(() => average.toFixed(1), [average]);
 
     const handleAdd = useCallback(() => {
         addItem({
@@ -28,6 +43,28 @@ const MenuCard = ({ item, onPress }: MenuCardProps) => {
             customizations: [],
         });
     }, [$id, addItem, imageUrl, name, numericPrice]);
+
+    const handleSubmitReview = useCallback(
+        async ({ rating, comment }: { rating: 1 | 2 | 3 | 4 | 5; comment?: string }) => {
+            try {
+                const result = await submitReview({ rating, comment });
+                if (result?.error) {
+                    Alert.alert("Unable to save review", result.error instanceof Error ? result.error.message : "Please try again.");
+                } else {
+                    showToast(
+                        result?.queued
+                            ? "You're offline. We'll send your review once you're connected."
+                            : "Thanks for sharing your experience!",
+                    );
+                }
+            } catch (error: any) {
+                Alert.alert("Unable to save review", error?.message || "Please try again.");
+            } finally {
+                setSheetVisible(false);
+            }
+        },
+        [submitReview],
+    );
 
     return (
         <TouchableOpacity
@@ -41,6 +78,11 @@ const MenuCard = ({ item, onPress }: MenuCardProps) => {
                     <Text className="body-medium uppercase text-dark-60 tracking-[2px]">chef's pick</Text>
                     <Text className="text-2xl font-quicksand-bold text-dark-100" numberOfLines={2}>{name}</Text>
                     <Text className="paragraph-semibold text-primary-dark">TRY {numericPrice.toFixed(2)}</Text>
+                    <View className="flex-row items-center gap-2">
+                        <Image source={images.star} className="size-4" contentFit="contain" tintColor="#FE8C00" />
+                        <Text className="paragraph-semibold text-dark-100">{averageLabel}</Text>
+                        <Text className="body-medium text-dark-60">({count})</Text>
+                    </View>
                 </View>
                 {imageUrl && (
                     <Image
@@ -52,7 +94,16 @@ const MenuCard = ({ item, onPress }: MenuCardProps) => {
                 )}
             </View>
 
-            <View className="mt-5 flex-row items-center justify-between">
+            <View className="mt-5 gap-3">
+                <TouchableOpacity
+                    className="self-start px-4 py-2 rounded-full border border-primary/20 bg-primary/10"
+                    onPress={() => setSheetVisible(true)}
+                >
+                    <Text className="paragraph-semibold text-primary-dark">Share your experience</Text>
+                </TouchableOpacity>
+            </View>
+
+            <View className="mt-3 flex-row items-center justify-between">
                 <View className="chip bg-primary/10 border-transparent">
                     <Text className="body-medium text-primary-dark">15-25 min</Text>
                 </View>
@@ -63,6 +114,15 @@ const MenuCard = ({ item, onPress }: MenuCardProps) => {
                     <Text className="paragraph-semibold text-white">Add to bag</Text>
                 </TouchableOpacity>
             </View>
+
+            <ReviewSheet
+                visible={sheetVisible}
+                onClose={() => setSheetVisible(false)}
+                onSubmit={handleSubmitReview}
+                submitting={isSubmitting}
+                initialRating={currentUserReview?.rating}
+                initialComment={currentUserReview?.comment}
+            />
         </TouchableOpacity>
     );
 };

@@ -14,9 +14,10 @@ import { router } from "expo-router";
 import { Image } from "expo-image";
 import { useCartStore } from "@/store/cart.store";
 import { images } from "@/constants";
-import useServerResource from "@/lib/useServerResource";
-import { createOrder, getAddresses } from "@/lib/api";
+import { createOrder } from "@/lib/api";
+import { useAddresses } from "@/src/features/address";
 import type { CartItemType } from "@/type";
+import type { PaymentMethod } from "@/src/domain/types";
 
 const cardShadow = {
     shadowColor: "#0F172A",
@@ -43,13 +44,9 @@ const ADDRESS_TAB_SKELETON_STYLE = {
 };
 const CONTAINER_PADDING = { paddingHorizontal: 24 };
 
-type PaymentMethod = "card_pos" | "online" | "cash";
-type TipOption = "0" | "10" | "15" | "20" | "custom";
-
 const paymentOptions: { id: PaymentMethod; label: string; description: string }[] = [
-    { id: "card_pos", label: "Card on delivery (POS)", description: "Courier brings a wireless POS" },
-    { id: "online", label: "Online card", description: "Coming soon" },
-    { id: "cash", label: "Cash", description: "Pay at the door" },
+    { id: "pos", label: "Card on delivery (POS)", description: "Courier brings a wireless POS" },
+    { id: "cash", label: "Cash", description: "Pay cash to the courier" },
 ];
 
 const formatCurrency = (value: number) => `TRY ${value.toFixed(2)}`;
@@ -136,24 +133,20 @@ const Cart = () => {
     const { items, getTotalPrice, increaseQty, decreaseQty, removeItem, clearCart } = useCartStore();
     const subtotal = useMemo(() => getTotalPrice(), [getTotalPrice, items]);
     const isCartEmpty = items.length === 0;
-    const deliveryFee = isCartEmpty ? 0 : 14.9;
-    const serviceFee = isCartEmpty ? 0 : 6.5;
+    const deliveryFee = 0;
+    const serviceFee = 0;
     const discount = subtotal > 250 ? 25 : 0;
-    const [tipOption, setTipOption] = useState<TipOption>("0");
-    const [customTip, setCustomTip] = useState("");
-    const parsedCustomTip = Math.max(0, Number(customTip) || 0);
-    const tipAmount = tipOption === "custom" ? parsedCustomTip : subtotal * (Number(tipOption) / 100);
-    const total = subtotal + deliveryFee + serviceFee + tipAmount - discount;
+    const total = subtotal - discount;
 
-    const { data: addresses } = useServerResource({ fn: getAddresses, immediate: true, skipAlert: true });
-    const [selectedAddress, setSelectedAddress] = useState<string | number | null>(null);
-    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+    const { addresses, isLoading: addressesLoading } = useAddresses();
+    const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>("pos");
     const [notes, setNotes] = useState("");
     const [placingOrder, setPlacingOrder] = useState(false);
-    const resolvedAddressId = selectedAddress ?? addresses?.[0]?.id ?? null;
+    const resolvedAddressId = selectedAddress ?? addresses[0]?.id ?? null;
     const canCheckout = Boolean(!isCartEmpty && resolvedAddressId !== null && paymentMethod);
     const selectedAddressId = stringifyId(selectedAddress);
-    const hasAddresses = Boolean(addresses?.length);
+    const hasAddresses = addresses.length > 0;
     const listData = useMemo(() => {
         const data: Array<{ type: "addresses" } | { type: "item"; item: CartItemType }> = [{ type: "addresses" }];
         items.forEach((item) => data.push({ type: "item", item }));
@@ -161,9 +154,20 @@ const Cart = () => {
     }, [items]);
 
     useEffect(() => {
-        if (selectedAddress !== null || !addresses?.length) return;
-        const defaultAddress = addresses.find((addr: any) => addr.isDefault);
-        setSelectedAddress(defaultAddress?.id ?? addresses[0].id);
+        if (!addresses.length) {
+            setSelectedAddress(null);
+            return;
+        }
+        if (!selectedAddress) {
+            const defaultAddress = addresses.find((addr) => addr.isDefault);
+            setSelectedAddress((defaultAddress ?? addresses[0]).id);
+            return;
+        }
+        const exists = addresses.some((addr) => stringifyId(addr.id) === stringifyId(selectedAddress));
+        if (!exists) {
+            const fallback = addresses.find((addr) => addr.isDefault) ?? addresses[0];
+            setSelectedAddress(fallback.id);
+        }
     }, [addresses, selectedAddress]);
 
     const handlePlaceOrder = async () => {
@@ -190,7 +194,7 @@ const Cart = () => {
             subtotal,
             deliveryFee,
             serviceFee,
-            tip: tipAmount,
+            tip: 0,
             discount,
             total,
             paymentMethod: paymentMethod as PaymentMethod,
@@ -249,7 +253,7 @@ const Cart = () => {
 
     const renderHeader = () => {
         const addressChips = hasAddresses
-            ? (addresses as any[]).map((address) => {
+            ? addresses.map((address) => {
                   const isActive = stringifyId(address.id) === selectedAddressId;
                   return (
                       <TouchableOpacity
@@ -261,13 +265,23 @@ const Cart = () => {
                           }}
                           onPress={() => setSelectedAddress(address.id)}
                       >
-                          <Text className="paragraph-semibold text-dark-80">{address.title}</Text>
+                          <Text className="paragraph-semibold text-dark-80">{address.label}</Text>
                       </TouchableOpacity>
                   );
               })
-            : ADDRESS_SKELETONS.map((skeleton) => (
-                  <View key={`address-pill-${skeleton}`} style={ADDRESS_PILL_SKELETON_STYLE} />
-              ));
+            : addressesLoading
+                ? ADDRESS_SKELETONS.map((skeleton) => (
+                      <View key={`address-pill-${skeleton}`} style={ADDRESS_PILL_SKELETON_STYLE} />
+                  ))
+                : [
+                      <TouchableOpacity
+                          key="add-address-pill"
+                          className="px-4 py-2 rounded-2xl border border-dashed border-gray-300"
+                          onPress={() => router.push("/ManageAddresses")}
+                      >
+                          <Text className="paragraph-semibold text-primary">Add address</Text>
+                      </TouchableOpacity>,
+                  ];
 
         return (
             <View className="gap-5 pt-4" style={CONTAINER_PADDING}>
@@ -279,7 +293,7 @@ const Cart = () => {
                         <View className="flex-1">
                             <Text className="body-medium text-dark-60">Deliver to</Text>
                             <Text className="paragraph-semibold text-dark-100" numberOfLines={1}>
-                                {addresses?.find((addr: any) => stringifyId(addr.id) === selectedAddressId)?.title || "Select address"}
+                                {addresses.find((addr) => stringifyId(addr.id) === selectedAddressId)?.label || "Select address"}
                             </Text>
                         </View>
                         <Image source={images.arrowDown} className="size-4" contentFit="contain" />
@@ -292,6 +306,11 @@ const Cart = () => {
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                         <View className="flex-row gap-3">{addressChips}</View>
                     </ScrollView>
+                    {!addressesLoading && (
+                        <TouchableOpacity className="mt-3 self-start" onPress={() => router.push("/ManageAddresses")}>
+                            <Text className="paragraph-semibold text-primary">Manage addresses</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             </View>
         );
@@ -299,7 +318,7 @@ const Cart = () => {
 
     const renderAddressTabs = () => {
         const tabContent = hasAddresses
-            ? (addresses as any[]).map((address) => {
+            ? addresses.map((address) => {
                   const isActive = stringifyId(address.id) === selectedAddressId;
                   return (
                       <TouchableOpacity
@@ -311,13 +330,23 @@ const Cart = () => {
                           }}
                           onPress={() => setSelectedAddress(address.id)}
                       >
-                          <Text className="paragraph-semibold text-dark-80">{address.title}</Text>
+                          <Text className="paragraph-semibold text-dark-80">{address.label}</Text>
                       </TouchableOpacity>
                   );
               })
-            : ADDRESS_SKELETONS.map((skeleton) => (
-                  <View key={`address-tab-${skeleton}`} style={ADDRESS_TAB_SKELETON_STYLE} />
-              ));
+            : addressesLoading
+                ? ADDRESS_SKELETONS.map((skeleton) => (
+                      <View key={`address-tab-${skeleton}`} style={ADDRESS_TAB_SKELETON_STYLE} />
+                  ))
+                : [
+                      <TouchableOpacity
+                          key="address-tab-empty"
+                          className="px-4 py-2 rounded-full border border-dashed border-gray-300"
+                          onPress={() => router.push("/ManageAddresses")}
+                      >
+                          <Text className="paragraph-semibold text-primary">Add address</Text>
+                      </TouchableOpacity>,
+                  ];
 
         return (
             <View className="bg-[#F8F6F2] py-3" style={CONTAINER_PADDING}>
@@ -342,7 +371,6 @@ const Cart = () => {
     };
 
     const handleNoteChange = (text: string) => setNotes(text.slice(0, MAX_NOTES));
-    const tipOptions: TipOption[] = ["0", "10", "15", "20", "custom"];
     const MAX_NOTES = 200;
     const noteSuggestions = ["Ring the bell", "Leave at door", "Call on arrival"];
 
@@ -357,49 +385,9 @@ const Cart = () => {
             <View className="gap-5 pt-6" style={CONTAINER_PADDING}>
                 <View className="bg-white rounded-[32px] p-5 gap-2" style={cardShadow}>
                     <SummaryRow label="Sub total" value={formatCurrency(subtotal)} />
-                    <SummaryRow label="Delivery fee" value={deliveryFee ? formatCurrency(deliveryFee) : "Free"} />
-                    <SummaryRow label="Service fee" value={serviceFee ? formatCurrency(serviceFee) : "Free"} />
                     <SummaryRow label="Discount" value={discount ? `- ${formatCurrency(discount)}` : "TRY 0.00"} />
-                    <SummaryRow label="Tip" value={formatCurrency(tipAmount)} />
                     <View className="border-t border-gray-100 my-2" />
                     <SummaryRow label="Total" value={formatCurrency(total)} highlight />
-                </View>
-
-                <View className="gap-3">
-                    <Text className="section-title">Tip your courier</Text>
-                    <View className="flex-row flex-wrap gap-3">
-                        {tipOptions.map((option) => {
-                            const isActive = tipOption === option;
-                            return (
-                                <TouchableOpacity
-                                    key={option}
-                                    className="px-4 py-2 rounded-2xl border"
-                                    style={{
-                                        borderColor: isActive ? "#FF8C42" : "#E2E8F0",
-                                        backgroundColor: isActive ? "#FFF6EF" : "#FFFFFF",
-                                    }}
-                                    onPress={() => {
-                                        setTipOption(option);
-                                        if (option !== "custom") setCustomTip("");
-                                    }}
-                                >
-                                    <Text className="paragraph-semibold text-dark-80">
-                                        {option === "custom" ? "Custom" : `${option}%`}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-                    {tipOption === "custom" && (
-                        <TextInput
-                            keyboardType="numeric"
-                            className="rounded-2xl bg-white border border-gray-100 px-4 py-3 text-dark-100"
-                            placeholder="Enter tip amount"
-                            placeholderTextColor="#94A3B8"
-                            value={customTip}
-                            onChangeText={(text) => setCustomTip(text.replace(/[^0-9.]/g, ""))}
-                        />
-                    )}
                 </View>
 
                 <View className="gap-3">

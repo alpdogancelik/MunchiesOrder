@@ -1,13 +1,15 @@
-import { useState } from "react";
-import { Alert, Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
+import { useNavigation } from "@react-navigation/native";
 import "@/src/lib/i18n";
 import useAuthStore from "@/store/auth.store";
 import useServerResource from "@/lib/useServerResource";
-import { getAddresses, getUserOrders, logout } from "@/lib/api";
+import { getUserOrders, logout } from "@/lib/api";
 import { router } from "expo-router";
 import { Badge, SectionHeader } from "@/src/components";
+import { useDefaultAddress, type ManageAddressesNavigation } from "@/src/features/address";
 
 const formatCurrency = (value?: number | string) => {
     const amount = Number(value ?? 0);
@@ -22,11 +24,15 @@ const STATUS_VARIANT: Record<string, "success" | "warning" | "danger"> = {
 };
 
 const Profile = () => {
+    const navigation = useNavigation<ManageAddressesNavigation>();
     const { user, setIsAuthenticated, setUser } = useAuthStore();
-    const { data: addresses } = useServerResource({ fn: getAddresses, skipAlert: true });
+    const { defaultAddress } = useDefaultAddress();
     const { data: orders } = useServerResource({ fn: getUserOrders, skipAlert: true });
     const [signingOut, setSigningOut] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+    const [isEditingProfile, setIsEditingProfile] = useState(false);
+    const [nameDraft, setNameDraft] = useState(user?.name ?? "");
+    const [emailDraft, setEmailDraft] = useState(user?.email ?? "");
     const { t } = useTranslation();
 
     const initials = (user?.name || "Munchies User")
@@ -36,8 +42,42 @@ const Profile = () => {
         .slice(0, 2)
         .toUpperCase();
 
-    const defaultAddress = addresses?.find((addr: any) => addr.isDefault) ?? addresses?.[0];
     const activeOrders = (orders || []).filter((order: any) => order.status !== "delivered");
+
+    const handleManageAddressesPress = () => {
+        const routeNames = navigation.getState?.()?.routeNames ?? [];
+        if (routeNames.includes("ManageAddresses")) {
+            navigation.navigate("ManageAddresses");
+            return;
+        }
+        router.push("/ManageAddresses");
+    };
+    const addressLineOne = defaultAddress
+        ? [defaultAddress.line1, defaultAddress.block].filter(Boolean).join(", ")
+        : "";
+    const addressLineTwo = defaultAddress
+        ? [defaultAddress.room, defaultAddress.city, defaultAddress.country].filter(Boolean).join(", ")
+        : "";
+
+    useEffect(() => {
+        setNameDraft(user?.name ?? "");
+        setEmailDraft(user?.email ?? "");
+    }, [user?.name, user?.email]);
+
+    const handleSaveProfile = () => {
+        const trimmedName = nameDraft.trim();
+        const trimmedEmail = emailDraft.trim();
+        if (!trimmedName || !trimmedEmail) {
+            Alert.alert(t("profile.header.edit"), "Name and email are required.");
+            return;
+        }
+        setUser({
+            ...(user || { avatar: undefined }),
+            name: trimmedName,
+            email: trimmedEmail,
+        });
+        setIsEditingProfile(false);
+    };
 
     const handleLogout = async () => {
         try {
@@ -69,10 +109,7 @@ const Profile = () => {
                             </View>
                         </View>
                         <View className="flex-row gap-3">
-                            <TouchableOpacity
-                                className="hero-cta flex-1 items-center"
-                                onPress={() => Alert.alert(t("profile.header.edit"), t("misc.editSoon"))}
-                            >
+                            <TouchableOpacity className="hero-cta flex-1 items-center" onPress={() => setIsEditingProfile(true)}>
                                 <Text className="text-white">{t("profile.header.edit")}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
@@ -91,21 +128,20 @@ const Profile = () => {
                         <SectionHeader title={t("profile.defaultAddress")} />
                         {defaultAddress ? (
                             <View className="gap-1">
-                                <Text className="paragraph-semibold text-dark-100">{defaultAddress.title}</Text>
-                                <Text className="body-medium text-dark-60">
-                                    {defaultAddress.addressLine1}
-                                    {defaultAddress.addressLine2 ? `, ${defaultAddress.addressLine2}` : ""}
-                                </Text>
-                                <Text className="body-medium text-dark-60">
-                                    {defaultAddress.city}, {defaultAddress.country}
-                                </Text>
+                                <Text className="paragraph-semibold text-dark-100">{defaultAddress.label}</Text>
+                                {addressLineOne ? (
+                                    <Text className="body-medium text-dark-60">{addressLineOne}</Text>
+                                ) : null}
+                                {addressLineTwo ? (
+                                    <Text className="body-medium text-dark-60">{addressLineTwo}</Text>
+                                ) : null}
                             </View>
                         ) : (
                             <Text className="body-medium text-dark-60">{t("profile.noAddress")}</Text>
                         )}
                         <TouchableOpacity
                             className="chip self-start mt-2"
-                            onPress={() => Alert.alert(t("profile.manageAddresses"), t("misc.manageSoon"))}
+                            onPress={handleManageAddressesPress}
                         >
                             <Text className="paragraph-semibold text-primary-dark">{t("profile.manageAddresses")}</Text>
                         </TouchableOpacity>
@@ -174,6 +210,47 @@ const Profile = () => {
                     </View>
                 </View>
             </ScrollView>
+
+            <Modal transparent animationType="fade" visible={isEditingProfile} onRequestClose={() => setIsEditingProfile(false)}>
+                <View className="flex-1 bg-black/40 justify-center px-5">
+                    <View className="bg-white rounded-3xl p-5 gap-4">
+                        <Text className="text-xl font-quicksand-bold text-dark-100">{t("profile.header.edit")}</Text>
+                        <View className="gap-2">
+                            <Text className="paragraph-semibold text-dark-80">Name</Text>
+                            <TextInput
+                                value={nameDraft}
+                                onChangeText={setNameDraft}
+                                placeholder="Your name"
+                                placeholderTextColor="#94A3B8"
+                                className="rounded-2xl border border-gray-200 px-4 py-3 text-dark-100"
+                            />
+                        </View>
+                        <View className="gap-2">
+                            <Text className="paragraph-semibold text-dark-80">Email</Text>
+                            <TextInput
+                                value={emailDraft}
+                                onChangeText={setEmailDraft}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                                placeholder="you@example.com"
+                                placeholderTextColor="#94A3B8"
+                                className="rounded-2xl border border-gray-200 px-4 py-3 text-dark-100"
+                            />
+                        </View>
+                        <View className="flex-row gap-3 mt-2">
+                            <TouchableOpacity
+                                className="flex-1 rounded-full border border-gray-200 py-3 items-center"
+                                onPress={() => setIsEditingProfile(false)}
+                            >
+                                <Text className="paragraph-semibold text-dark-60">Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity className="flex-1 rounded-full bg-primary py-3 items-center" onPress={handleSaveProfile}>
+                                <Text className="paragraph-semibold text-white">Save</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
 
             {selectedOrder && (
                 <Modal animationType="slide" transparent visible onRequestClose={closeModal}>

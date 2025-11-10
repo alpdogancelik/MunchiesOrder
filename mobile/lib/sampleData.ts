@@ -34,22 +34,26 @@ export const sampleCategories: Record<number, { id: number; name: string }[]> = 
 
 export const sampleAddresses = [
     {
-        id: 501,
-        title: "Dorm A - Room 204",
-        addressLine1: "Campus Residences, Block A",
-        addressLine2: "Room 204",
-        city: "Kalkanlı",
+        id: "501",
+        label: "Dorm A - Room 204",
+        line1: "Campus Residences",
+        block: "Block A",
+        room: "Room 204",
+        city: "Kalkanli",
         country: "TRNC",
         isDefault: true,
+        createdAt: new Date(Date.now() - 3600_000).toISOString(),
     },
     {
-        id: 502,
-        title: "Library",
-        addressLine1: "Main Library, Study Room 3",
-        addressLine2: null,
-        city: "Kalkanlı",
+        id: "502",
+        label: "Library",
+        line1: "Main Library",
+        block: "Study Wing 3",
+        room: undefined,
+        city: "Kalkanli",
         country: "TRNC",
         isDefault: false,
+        createdAt: new Date(Date.now() - 7200_000).toISOString(),
     },
 ];
 
