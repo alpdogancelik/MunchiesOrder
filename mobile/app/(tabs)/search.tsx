@@ -14,7 +14,7 @@ import { useLocalSearchParams } from "expo-router";
 import CartButton from "@/components/CartButton";
 import { images } from "@/constants";
 import useAppwrite from "@/lib/useAppwrite";
-import { getCategories } from "@/lib/appwrite";
+import { getCategories } from "@/lib/firebaseAuth";
 import type { MenuItem } from "@/type";
 import { Chip, Stepper, Card } from "@/src/components";
 import useSearch, { SearchSort } from "@/src/hooks/useSearch";

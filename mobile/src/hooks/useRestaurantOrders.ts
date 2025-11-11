@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { getRestaurantOrders, updateOrderStatus } from "@/lib/appwrite";
+import { getRestaurantOrders, listenToOrders, updateOrderStatus } from "@/lib/firebaseAuth";
 import type { RestaurantOrder } from "@/type";
-import { subscribeToOrders } from "@/src/lib/realtime";
 
 export const useRestaurantOrders = (restaurantId?: string) => {
     const [orders, setOrders] = useState<RestaurantOrder[]>([]);
@@ -28,26 +27,15 @@ export const useRestaurantOrders = (restaurantId?: string) => {
 
     useEffect(() => {
         if (!restaurantId) return undefined;
-        const unsubscribe = subscribeToOrders("orders:*", (event) => {
-            setOrders((prev) => {
-                const exists = prev.find((order) => order.id === event.id || order.$id === event.id);
-                if (exists) {
-                    return prev.map((order) =>
-                        order.id === event.id || order.$id === event.id ? { ...order, ...event } : order,
-                    );
-                }
-                return [
-                    {
-                        ...event,
-                        id: event.id,
-                        orderItems: event.orderItems ?? [],
-                        total: event.total ?? 0,
-                        status: event.status ?? "pending",
-                    } as RestaurantOrder,
-                    ...prev,
-                ];
-            });
-        });
+        const unsubscribe = listenToOrders(
+            { restaurantId },
+            (incoming) => {
+                setOrders(Array.isArray(incoming) ? (incoming as RestaurantOrder[]) : []);
+            },
+            (err) => {
+                setError(err?.message || "Unable to fetch orders");
+            },
+        );
         return unsubscribe;
     }, [restaurantId]);
 

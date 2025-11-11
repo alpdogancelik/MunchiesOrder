@@ -30,6 +30,15 @@ npm install
    - `EXPO_PUBLIC_USE_MOCK_DATA` &mdash; keep as `"true"` for local mocks, set to `"false"` to hit the live Appwrite backend once your IDs are ready.
    - `EXPO_PUBLIC_SENTRY_DSN` &mdash; optional; Sentry only initialises when this value exists.
 
+   **Firebase (optional super admin dashboard)**
+   - `EXPO_PUBLIC_FIREBASE_API_KEY`
+   - `EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN`
+   - `EXPO_PUBLIC_FIREBASE_PROJECT_ID`
+   - `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET`
+   - `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+   - `EXPO_PUBLIC_FIREBASE_APP_ID`
+   - `EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID` (optional but required for Analytics)
+
    **Other services**
    - `EXPO_PUBLIC_API_BASE_URL` (optional Node/Express API for courier/restaurant tooling)
    - `EXPO_PUBLIC_PEXELS_API_KEY` (enables the menu photo search helper)

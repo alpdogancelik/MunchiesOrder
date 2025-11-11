@@ -19,7 +19,7 @@ const isOffline = () => {
 
 export const useProductReviews = (productId?: string) => {
     const { user } = useAuthStore();
-    const userId = (user as any)?.$id || user?.id || "guest";
+    const userId = (user as any)?.$id || (user as any)?.id || "guest";
     const [reviews, setReviews] = useState<Review[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);

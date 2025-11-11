@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getMenu } from "@/lib/appwrite";
+import { getMenu } from "@/lib/firebaseAuth";
 import type { MenuItem } from "@/type";
 
 export type SearchSort = "relevance" | "eta" | "price";

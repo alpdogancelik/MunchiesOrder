@@ -3,7 +3,7 @@ import { Link, router } from "expo-router";
 import CustomInput from "@/components/CustomInput";
 import CustomButton from "@/components/CustomButton";
 import { useState } from "react";
-import { signIn, getCurrentUser } from "@/lib/appwrite";
+import { signIn, getCurrentUser } from "@/lib/firebaseAuth";
 import useAuthStore from '@/store/auth.store';
 import * as Sentry from '@sentry/react-native'
 

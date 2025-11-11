@@ -3,7 +3,7 @@ import { Link, router } from "expo-router";
 import CustomInput from "@/components/CustomInput";
 import CustomButton from "@/components/CustomButton";
 import { useState } from "react";
-import { createUser } from "@/lib/appwrite";
+import { createUser } from "@/lib/firebaseAuth";
 import useAuthStore from "@/store/auth.store";
 
 const SignUp = () => {

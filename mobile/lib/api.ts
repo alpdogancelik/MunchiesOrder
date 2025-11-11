@@ -9,6 +9,7 @@ import {
     sampleRestaurantOrders,
     sampleRestaurants,
 } from "./sampleData";
+import { createOrderDocument, firebaseOrdersEnabled } from "./firebaseAuth";
 
 const extra: any = Constants.expoConfig?.extra || {};
 const env = (name: string) => (typeof process !== 'undefined' ? (process as any).env?.[name] : undefined) || extra[name];
@@ -234,6 +235,10 @@ export const getUserOrders = async () => {
 };
 
 export const createOrder = async ({ orderData, orderItems }: { orderData: Record<string, any>; orderItems: Record<string, any>[]; }) => {
+    if (firebaseOrdersEnabled) {
+        return createOrderDocument(orderData, orderItems);
+    }
+
     return withFallback(
         () => jsonFetch('/api/orders', {
             method: 'POST',
@@ -243,7 +248,7 @@ export const createOrder = async ({ orderData, orderItems }: { orderData: Record
             id: Date.now(),
             ...orderData,
             orderItems,
-            status: "pending",
+            status: "pending approval",
             createdAt: new Date().toISOString(),
         }),
     );

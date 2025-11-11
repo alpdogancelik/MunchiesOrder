@@ -3,7 +3,7 @@ import { ImageSourcePropType } from "react-native";
 import useAuthStore from "@/store/auth.store";
 import useAppwrite from "@/lib/useAppwrite";
 import useServerResource from "@/lib/useServerResource";
-import { getMenu } from "@/lib/appwrite";
+import { getMenu } from "@/lib/firebaseAuth";
 import { getRestaurants } from "@/lib/api";
 import type { Category } from "@/type";
 import { CATEGORIES, images } from "@/constants";

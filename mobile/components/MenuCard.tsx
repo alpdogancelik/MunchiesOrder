@@ -1,7 +1,6 @@
 import { memo, useCallback, useMemo, useState } from "react";
 import { Alert, Platform, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { Image } from "expo-image";
-import { appwriteConfig } from "@/lib/appwrite";
 import { useCartStore } from "@/store/cart.store";
 import { images } from "@/constants";
 import ReviewSheet from "@/src/features/reviews/ReviewSheet";
@@ -21,12 +20,9 @@ const showToast = (message: string) => {
 };
 
 const MenuCard = ({ item, onPress }: MenuCardProps) => {
-    const { $id, image_url, name, price } = item || {};
-    const imageUrl = image_url
-        ? image_url.startsWith("http")
-            ? image_url
-            : `${image_url}?project=${appwriteConfig.projectId}`
-        : undefined;
+    const { $id, image_url, imageUrl: fallbackImageUrl, name, price } = item || {};
+    const resolvedImage = image_url || fallbackImageUrl;
+    const imageUrl = resolvedImage?.startsWith("http") ? resolvedImage : undefined;
     const { addItem } = useCartStore();
     const numericPrice = Number(price || 0);
     const productId = $id || item?.id || name;

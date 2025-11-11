@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { listenToOrder } from "@/lib/firebaseAuth";
 import { getOrder } from "@/src/api/client";
-import { subscribeToOrders } from "@/src/lib/realtime";
 import type { Order } from "@/src/domain/types";
 
 type OrderRealtimePayload = {
@@ -34,18 +34,15 @@ export const useOrderRealtime = (orderId?: string) => {
 
     useEffect(() => {
         if (!orderId) return undefined;
-        const unsubscribeState = subscribeToOrders("order_state_changed", (payload) => {
-            if (payload.id !== orderId) return;
-            setOrder((prev) => ({ ...(prev ?? {}) as Order, ...payload }));
-        });
-        const unsubscribeAuto = subscribeToOrders("order_auto_canceled", (payload) => {
-            if (payload.id !== orderId) return;
-            setOrder((prev) => ({ ...(prev ?? {}) as Order, ...payload, status: "canceled" }));
-        });
-        return () => {
-            unsubscribeState();
-            unsubscribeAuto();
-        };
+        const unsubscribe = listenToOrder(
+            orderId,
+            (next) => {
+                if (!next) return;
+                setOrder((prev) => ({ ...(prev ?? {}) as Order, ...next }));
+            },
+            (err) => setError(err?.message || "Unable to subscribe to order updates"),
+        );
+        return unsubscribe;
     }, [orderId]);
 
     return { order, error, refetch: fetchOrder };

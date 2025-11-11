@@ -22,7 +22,7 @@ import {
     getRestaurantMenu as getRestaurantMenuAppwrite,
     getRestaurantOrders as getRestaurantOrdersAppwrite,
     updateOrderStatus as updateOrderStatusAppwrite,
-} from "@/lib/appwrite";
+} from "@/lib/firebaseAuth";
 import { searchFoodImages, type PexelsImage } from "@/lib/pexels";
 import { images } from "@/constants";
 
